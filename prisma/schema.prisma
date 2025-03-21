@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,16 +7,730 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enums
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING_VERIFICATION
+  LOCKED
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum CourseType {
+  COURSE
+  BUNDLE
+  MEMBERSHIP
+}
+
+enum LessonType {
+  VIDEO
+  TEXT
+  QUIZ
+  ASSIGNMENT
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  GRADED
+  RESUBMITTED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+enum ReactionType {
+  LIKE
+  DISLIKE
+  HEART
+  LAUGH
+  SAD
+  ANGRY
+}
+
+// Models
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("user")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                     String    @id @default(auto()) @map("_id") @db.ObjectId
+  email                  String    @unique
+  password               String
+  firstName              String
+  lastName               String?
+  role                   Role      @default(STUDENT)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  imageUrl               String?
+  bio                    String?
+  portfolio              String?
+  lastLogin              DateTime?
+  lastLogout             DateTime?
+  lastActive             DateTime?
+  passwordResetToken     String?
+  otp                    String?
+  otpExpiry              DateTime?
+  emailVerified          Boolean   @default(false)
+  emailVerificationToken String?
+
+  status                 UserStatus @default(ACTIVE)
+  phoneNumber            String?
+  address                String?
+  city                   String?
+  state                  String?
+  zipCode                String?
+  country                String?
+  profileVisibility      String     @default("PUBLIC")
+  tosAcceptedAt          DateTime?
+  deletedAt              DateTime?
+  subscribedToNewsletter Boolean    @default(false)
+
+  // Related fields
+  enrolledCourses        Enrollment[]
+  createdCourses         Course[]                 @relation("TeacherCourses")
+  submissions            Submission[]
+  grades                 Grade[]
+  Note                   Note[]
+  reviews                reviews[]
+  Comment                Comment[]
+  Reply                  Reply[]
+  Chat                   Chat[]
+  Message                Message[]
+  PaymentCard            PaymentCard[]
+  Notification           Notification[]
+  Cart                   Cart[]
+  Wishlist               Wishlist[]
+  SocialProfile          SocialProfile[]
+  userSettings           userSettings[]
+  NotificationSettings   NotificationSettings[]
+  PlayerSettings         PlayerSettings[]
+  IPList                 IPList[]
+  lessonProgress         lessonProgress[]
+  CourseProgress         CourseProgress[]
+  payment                Payment[]
+  file                   file[]
+  Reaction               Reaction[]
+  ChatParticipant        ChatParticipant[]
+  SubscribedToNewsletter SubscribedToNewsletter[]
+  Instructor             Instructor[]
+  Rating                 InstructorRating[]
+  NotificationList       NotificationList[]
+
   @@map("users")
 }
 
+model IPList {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  ip        String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
+model Instructor {
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String             @unique @map("user_id") @db.ObjectId
+  user      User               @relation(fields: [userId], references: [id])
+  bio       String? // Tuhin
+  about     String? // Talha
+  website   String? // Talha
+  facebook  String? // Sifat
+  instagram String? // Sifat
+  linkedin  String? // Sifat
+  twitter   String? // Sifat
+  whatsapp  String? // Sifat
+  youtube   String? // Sifat
+  createdAt DateTime?          @default(now()) @map("created_at") // Talha
+  updatedAt DateTime?          @default(now()) @map("updated_at") // Talha
+  Course    Course[]
+  ratings   InstructorRating[]
 
+  @@map("Instructors")
+}
+
+model InstructorRating {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String     @db.ObjectId
+  user         User       @relation(fields: [userId], references: [id])
+  instructorId String     @db.ObjectId
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+  rating       Float
+  comment      String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Course {
+  id                 String       @id @default(auto()) @map("_id") @db.ObjectId
+  title              String
+  subtitle           String?
+  category           String?
+  subCategory        String?
+  topic              String?
+  description        String?
+  language           String?
+  subtitleLanguages  String[]
+  level              Difficulty   @default(BEGINNER)
+  duration           String?
+  thumbnail          String?
+  trailer            String?
+  price              Float?
+  discountPrice      Float?
+  discountPercentage Float?
+  startDate          DateTime?
+  endDate            DateTime?
+  imageUrl           String?
+  teacher            User         @relation("TeacherCourses", fields: [teacherId], references: [id])
+  teacherId          String       @db.ObjectId
+  status             CourseStatus @default(DRAFT)
+  visibility         String       @default("PUBLIC") // PUBLIC, PRIVATE, UNLISTED
+  instructorId       String?      @db.ObjectId
+  instructor         Instructor?  @relation(fields: [instructorId], references: [id]) // relationship with instructor model
+
+  // Related fields
+  tags                   String[]
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  modules                Module[]
+  enrollments            Enrollment[]
+  categories             CourseCategory[]
+  assignments            Assignment[]
+  quizzes                Quiz[]
+  learnings              Learnings[]
+  targetAudiences        TargetAudience[]
+  PreRequirement         PreRequirement[]
+  reviews                reviews[]
+  Revenue                Revenue[]
+  Cart                   Cart[]
+  Wishlist               Wishlist[]
+  CourseProgress         CourseProgress[]
+  welcomeMessage         String?
+  congratulationsMessage String?
+  certificateTemplateUrl String?
+  payment                Payment[]
+
+  @@map("courses")
+}
+
+model Learnings {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  description String?
+  course      Course   @relation(fields: [courseId], references: [id])
+  courseId    String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("learnings")
+}
+
+model TargetAudience {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  description String?
+  course      Course   @relation(fields: [courseId], references: [id])
+  courseId    String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PreRequirement {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  description String?
+  course      Course   @relation(fields: [courseId], references: [id])
+  courseId    String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Module {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  course      Course       @relation(fields: [courseId], references: [id])
+  courseId    String       @db.ObjectId
+  lessons     Lesson[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  order       Int? //Order of the modules
+  Assignments Assignment[]
+
+  @@map("modules")
+}
+
+model Lesson {
+  id                    String           @id @default(auto()) @map("_id") @db.ObjectId
+  title                 String
+  content               String?
+  caption               String?
+  videoUrl              String?
+  linkUrl               String?
+  moduleId              String           @db.ObjectId
+  module                Module           @relation(fields: [moduleId], references: [id])
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  Quiz                  Quiz[]           @relation("QuizToLesson")
+  Note                  Note[]
+  Comment               Comment[]
+  Attachment            Attachment[]
+  lessonProgress        lessonProgress[]
+  order                 Int? // Order of the lessons within a module
+  lessonType            LessonType       @default(VIDEO)
+  downloadableResources String[]
+  estimatedTime         Int? // In minutes
+  freePreview           Boolean          @default(false)
+
+  @@map("lessons")
+}
+
+model file {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  url             String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  mimeType        String?
+  fileSize        Int?
+  storageLocation String?
+  userId          String?  @db.ObjectId
+  user            User?    @relation(fields: [userId], references: [id])
+}
+
+model Attachment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  url       String
+  lessonId  String   @db.ObjectId
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Note {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  content   String
+  linkUrl   String?
+  lessonId  String   @db.ObjectId
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String?  @db.ObjectId
+  User      User?    @relation(fields: [userId], references: [id])
+}
+
+model lessonProgress {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  lessonId      String   @db.ObjectId
+  lesson        Lesson   @relation(fields: [lessonId], references: [id])
+  userId        String   @db.ObjectId
+  user          User     @relation(fields: [userId], references: [id])
+  completed     Boolean
+  progress      Int
+  quizCompleted Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CourseProgress {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId            String   @db.ObjectId
+  course              Course   @relation(fields: [courseId], references: [id])
+  userId              String   @db.ObjectId
+  user                User     @relation(fields: [userId], references: [id])
+  completed           Boolean
+  quizCompleted       Int
+  quizTotal           Int
+  assignmentCompleted Int
+  assignmentTotal     Int
+  progress            Int
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Enrollment {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id])
+  courseId       String   @db.ObjectId
+  course         Course   @relation(fields: [courseId], references: [id])
+  enrollmentDate DateTime @default(now())
+
+  @@map("enrollments")
+}
+
+model CourseCategory {
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  courseId      String       @db.ObjectId
+  course        Course       @relation(fields: [courseId], references: [id])
+  categoryId    String       @db.ObjectId
+  category      Category     @relation(fields: [categoryId], references: [id])
+  SubCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
+  subCategoryId String?      @db.ObjectId
+
+  @@map("course_categories")
+}
+
+model Category {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  name        String           @unique
+  courses     CourseCategory[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  SubCategory SubCategory[]
+
+  @@map("categories")
+}
+
+model SubCategory {
+  id         String           @id @default(auto()) @map("_id") @db.ObjectId
+  name       String           @unique
+  categoryId String?          @db.ObjectId
+  category   Category?        @relation(fields: [categoryId], references: [id])
+  courses    CourseCategory[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@map("subcategories")
+}
+
+model Assignment {
+  id                   String       @id @default(auto()) @map("_id") @db.ObjectId
+  title                String
+  description          String?
+  dueDate              DateTime
+  moduleId             String       @db.ObjectId
+  module               Module       @relation(fields: [moduleId], references: [id])
+  submissions          Submission[]
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  maxPoints            Int? //Maximum points for the assignment
+  allowLateSubmissions Boolean?     @default(true)
+
+  Course   Course? @relation(fields: [courseId], references: [id])
+  courseId String? @db.ObjectId
+
+  @@map("assignments")
+}
+
+model Submission {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  student        User             @relation(fields: [studentId], references: [id])
+  studentId      String           @db.ObjectId
+  assignment     Assignment       @relation(fields: [assignmentId], references: [id])
+  assignmentId   String           @db.ObjectId
+  submissionDate DateTime         @default(now())
+  status         SubmissionStatus @default(SUBMITTED)
+  lateSubmission Boolean?         @default(false)
+  grade          Grade[]
+  liveLink       String?
+  githubLink     String?
+
+  @@map("submissions")
+}
+
+model Grade {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  student      User        @relation(fields: [studentId], references: [id])
+  studentId    String      @db.ObjectId
+  submission   Submission? @relation(fields: [submissionId], references: [id])
+  submissionId String?     @db.ObjectId
+  quiz         Quiz?       @relation(fields: [quizId], references: [id])
+  quizId       String?     @db.ObjectId
+  grade        Float
+  feedback     String?
+
+  @@map("grades")
+}
+
+model Quiz {
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  title          String
+  description    String?
+  course         Course     @relation(fields: [courseId], references: [id])
+  courseId       String     @db.ObjectId
+  lessionId      String     @db.ObjectId
+  lesson         Lesson     @relation("QuizToLesson", fields: [lessionId], references: [id])
+  questions      Question[]
+  grades         Grade[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  shuffleOptions Boolean    @default(false)
+  timeLimit      Int? // In minutes
+  passingScore   Int?
+
+  @@map("quizzes")
+}
+
+model Question {
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  quiz          Quiz         @relation(fields: [quizId], references: [id])
+  quizId        String       @db.ObjectId
+  questionText  String
+  options       String[] //Store as a JSON array of options
+  correctAnswer Int //Index of the correct option in the options array
+  questionType  QuestionType @default(MULTIPLE_CHOICE)
+  partialCredit Boolean      @default(false)
+  feedback      String?
+
+  @@map("questions")
+}
+
+model reviews {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id])
+  courseId       String   @db.ObjectId
+  course         Course   @relation(fields: [courseId], references: [id])
+  rating         Int
+  comment        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  anonymous      Boolean  @default(false)
+  helpfulCount   Int      @default(0)
+  unhelpfulCount Int      @default(0)
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  lessonId  String   @db.ObjectId
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Reply Reply[]
+}
+
+model Reply {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  commentId String   @db.ObjectId
+  comment   Comment  @relation(fields: [commentId], references: [id])
+  reply     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Chat {
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  participants     ChatParticipant[]
+  Message          Message[]
+  isGroupChat      Boolean           @default(false)
+  groupName        String?
+  groupDescription String?
+  groupAvatarUrl   String?
+  groupAdmin       User?             @relation(fields: [groupAdminId], references: [id])
+  groupAdminId     String?           @db.ObjectId
+}
+
+model ChatParticipant {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  chatId   String    @db.ObjectId
+  chat     Chat      @relation(fields: [chatId], references: [id])
+  userId   String    @db.ObjectId
+  user     User      @relation(fields: [userId], references: [id])
+  role     String? //Admin, Member, etc.
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime? //Make this nullable
+
+  @@unique([chatId, userId]) // Ensure a user can only be in a chat once
+}
+
+model Message {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  senderId  String?    @db.ObjectId
+  sender    User?      @relation(fields: [senderId], references: [id])
+  chatId    String     @db.ObjectId
+  chat      Chat       @relation(fields: [chatId], references: [id])
+  message   String?
+  fileUrl   String?
+  status    String? // Delivered, Read
+  isSeenBy  String[]   @db.ObjectId
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  reactions Reaction[]
+  pinned    Boolean    @default(false)
+}
+
+model Reaction {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  message      Message      @relation(fields: [messageId], references: [id])
+  messageId    String       @db.ObjectId
+  userId       String       @db.ObjectId
+  user         User         @relation(fields: [userId], references: [id])
+  reactionType ReactionType
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model PaymentCard {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+  name       String
+  cardNumber String
+  expiryDate String
+  cvv        String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  Payment Payment[]
+}
+
+model Payment {
+  id                     String      @id @default(auto()) @map("_id") @db.ObjectId
+  amount                 Float
+  currency               String
+  method                 String
+  card                   PaymentCard @relation(fields: [cardId], references: [id])
+  cardId                 String      @db.ObjectId
+  status                 String? // Success, Failed
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  paymentIntentId        String? // From Stripe or other payment gateway
+  taxAmount              Float?
+  taxRate                Float?
+  currencyConversionRate Float?
+  refunds                Refund[]
+  userId                 String?     @db.ObjectId
+  user                   User?       @relation(fields: [userId], references: [id])
+  courseId               String?     @db.ObjectId
+  course                 Course?     @relation(fields: [courseId], references: [id])
+}
+
+model Refund {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  payment   Payment  @relation(fields: [paymentId], references: [id])
+  paymentId String   @db.ObjectId
+  amount    Float
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Revenue {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id])
+  amount    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  message   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cupon {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  code      String
+  discount  Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cart {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  quantity  Int      @default(1)
+}
+
+model Wishlist {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SocialProfile {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  platform  String
+  username  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model userSettings {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  theme     String
+  language  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotificationSettings {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  email     Boolean
+  push      Boolean
+  sms       Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotificationList {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model PlayerSettings {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  volume    Int
+  speed     Int
+  quality   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SubscribedToNewsletter {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

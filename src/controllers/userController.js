@@ -17,8 +17,11 @@ const generateToken = (id) => {
 // @access  Public
 export const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body
+    const { firstName, lastName, email, password } = req.body
 
+    if (!firstName || !lastName || !email || !password) {
+      return next(new AppError("All fields are required", 400))
+    }
     // Check if user exists
     const userExists = await prisma.user.findUnique({
       where: { email },
@@ -35,10 +38,10 @@ export const registerUser = async (req, res, next) => {
     // Create user
     const user = await prisma.user.create({
       data: {
-        name,
+        firstName,
+        lastName,
         email,
         password: hashedPassword,
-        role: "user",
       },
     })
 
@@ -96,7 +99,8 @@ export const getUserProfile = async (req, res, next) => {
       where: { id: req.user.id },
       select: {
         id: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         email: true,
         role: true,
         createdAt: true,

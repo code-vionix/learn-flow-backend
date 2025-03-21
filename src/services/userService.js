@@ -8,7 +8,8 @@ export const userService = {
     return await prisma.user.findMany({
       select: {
         id: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         email: true,
         role: true,
         createdAt: true,
@@ -22,7 +23,8 @@ export const userService = {
       where: { id },
       select: {
         id: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         email: true,
         role: true,
         createdAt: true,

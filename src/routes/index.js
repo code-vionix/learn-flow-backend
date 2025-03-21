@@ -5,7 +5,8 @@ import { notFound } from "../middleware/errorHandler.js";
 const router = express.Router();
 
 // API routes
-router.use("/users", userRoutes);
+router.use("/users", userRoutes); //api/v1/users
+
 
 // Handle 404 for API routes
 router.use(notFound);
