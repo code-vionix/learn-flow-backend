@@ -15,6 +15,7 @@ prisma.$on("error", (e) => {
 // Export models for convenience
 export const models = {
   user: prisma.user,
+  courseCategory: prisma.courseCategory,
 };
 
 // Helper function to handle Prisma errors

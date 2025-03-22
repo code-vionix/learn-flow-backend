@@ -376,7 +376,7 @@ model Enrollment {
 model CourseCategory {
   id            String       @id @default(auto()) @map("_id") @db.ObjectId
   courseId      String       @db.ObjectId
-  course        Course       @relation(fields: [courseId], references: [id])
+  course        Course?       @relation(fields: [courseId], references: [id])
   categoryId    String       @db.ObjectId
   category      Category     @relation(fields: [categoryId], references: [id])
   SubCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
