@@ -39,6 +39,7 @@ export const createInstructor = async (req, res, next) => {
 // get all instructor
 export const getAllInstructors = async (_req, res, next) => {
   const instructors = await prisma.instructor.findMany({
+    where: { deletedAt: null },
     orderBy: {
       createdAt: "desc",
     },
@@ -56,7 +57,7 @@ export const getInstructorsById = async (req, res, next) => {
   const { id } = req.params;
   try {
     const instructor = await prisma.instructor.findUnique({
-      where: { id },
+      where: { deletedAt: null, id },
     });
     if (!instructor) {
       return next(new AppError("Instructor not found", 404));
@@ -81,7 +82,7 @@ export const updateInstructor = async (req, res, next) => {
       throw new AppError("Instructor not found", 404);
     }
     const updateInstructor = await prisma.instructor.update({
-      where: { id },
+      where: { deletedAt: null, id },
       data: instructorData,
       include: {
         user: {
@@ -106,17 +107,13 @@ export const updateInstructor = async (req, res, next) => {
 export const deleteInstructor = async (req, res, next) => {
   const { id } = req.params;
   try {
-    const instructor = await prisma.instructor.findUnique({
+    const instructor = await prisma.instructor.update({
       where: { id },
-    });
-    if (!instructor) {
-      throw new AppError("Instructor not found", 404);
-    }
-    const deleteInstructor = await prisma.instructor.delete({
-      where: { id },
+      data: { deletedAt: new Date() },
     });
 
-    return res.status(200).json({
+    return res.status(202).json({
+      instructor: instructor.bio || "",
       status: "success",
       message: "Instructor deleted successfully",
     });

@@ -13,7 +13,7 @@ const router = express.Router();
 router.post("/", createInstructor);
 router.get("/", getAllInstructors);
 router.get("/:id", getInstructorsById);
-router.patch("/:id/update", updateInstructor);
-router.delete("/:id/delete", deleteInstructor);
+router.patch("/:id", updateInstructor);
+router.delete("/:id", deleteInstructor);
 
 export default router;

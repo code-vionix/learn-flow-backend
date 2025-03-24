@@ -51,25 +51,22 @@ export const getAllCourse = async (req, res, next) => {
 
 // get course by id
 export const getCourseById = async (req, res, next) => {
-  const { title, teacherId } = req.body;
+  const { id } = req.params;
   try {
-    if (!title && !teacherId) {
-      return next(new AppError("Titel and Teacher requird", 400));
+    if (!id) {
+      return next(new AppError("Course id  requird", 400));
     }
-    // Create course
-    const course = await prisma.course.create({
-      data: {
-        teacherId,
-        title,
-      },
+
+    const course = await prisma.course.findUnique({
+      where: { deletedAt: null, id },
     });
 
     if (!course) {
-      return next(new AppError("Course create failed", 404));
+      return next(new AppError("Course not Found!", 404));
     }
 
     if (course) {
-      res.status(201).json(course);
+      res.status(200).json(course);
     }
   } catch (error) {
     return next(new AppError("something went wrong", 500));
@@ -78,25 +75,20 @@ export const getCourseById = async (req, res, next) => {
 
 //course update
 export const UpdateCourse = async (req, res, next) => {
-  const { title, teacherId } = req.body;
+  const { id } = req.params;
+  const courseData = req.body;
   try {
-    if (!title && !teacherId) {
-      return next(new AppError("Titel and Teacher requird", 400));
-    }
-    // Create course
-    const course = await prisma.course.create({
-      data: {
-        teacherId,
-        title,
-      },
+    const course = await prisma.course.update({
+      where: { deletedAt: null, id },
+      data: courseData,
     });
 
     if (!course) {
-      return next(new AppError("Course create failed", 404));
+      return next(new AppError("Course update failed", 404));
     }
 
     if (course) {
-      res.status(201).json(course);
+      res.status(200).json(course);
     }
   } catch (error) {
     return next(new AppError("something went wrong", 500));
@@ -105,26 +97,17 @@ export const UpdateCourse = async (req, res, next) => {
 
 //Delete course
 export const DeleteCourse = async (req, res, next) => {
-  const { title, teacherId } = req.body;
+  const { id } = req.params;
   try {
-    if (!title && !teacherId) {
-      return next(new AppError("Titel and Teacher requird", 400));
-    }
-    // Create course
-    const course = await prisma.course.create({
-      data: {
-        teacherId,
-        title,
-      },
+    await prisma.course.update({
+      where: { id },
+      data: { deletedAt: new Date() },
     });
 
-    if (!course) {
-      return next(new AppError("Course create failed", 404));
-    }
-
-    if (course) {
-      res.status(201).json(course);
-    }
+    return res.status(202).json({
+      status: "success",
+      message: "Delete successfully",
+    });
   } catch (error) {
     return next(new AppError("something went wrong", 500));
   }

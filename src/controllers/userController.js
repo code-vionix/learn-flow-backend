@@ -1,16 +1,55 @@
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { prisma } from "../models/index.js";
+import jwt from "jsonwebtoken";
 import { config } from "../config/index.js";
 import { AppError } from "../middleware/errorHandler.js";
+import { prisma } from "../models/index.js";
 import { userService } from "../services/userService.js";
 
 // Generate JWT token
-
-const generateToken = (id) => {
-  return jwt.sign({ id }, config.jwtSecret, {
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, config.jwtSecret, {
     expiresIn: config.jwtExpiresIn,
   });
+};
+
+// Generate refresh token
+const generateRefreshToken = (id) => {
+  return jwt.sign({ id }, config.jwtRefreshSecret, {
+    expiresIn: config.jwtRefreshExpiresIn,
+  });
+};
+
+// @desc    Regenerate access token
+// @route   POST /api/v1/users/access-token
+// @access  Private
+export const regenerateAccessToken = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return next(new AppError("Refresh token is required", 400));
+    }
+
+    jwt.verify(refreshToken, config.jwtRefreshSecret, async (err, decoded) => {
+      if (err) {
+        return next(new AppError("Invalid refresh token", 401));
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+      });
+
+      if (!user) {
+        return next(new AppError("User not found", 404));
+      }
+
+      res.status(200).json({
+        accessToken: generateToken(user.id, user.role),
+      });
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 // @desc    Register a new user
@@ -52,7 +91,8 @@ export const registerUser = async (req, res, next) => {
         name: user.firstName + " " + user.lastName,
         email: user.email,
         role: user.role,
-        token: generateToken(user.id),
+        accessToken: generateToken(user.id, user.role),
+        refreshToken: generateRefreshToken(user.id),
       });
     } else {
       return next(new AppError("Invalid user data", 400));
@@ -81,7 +121,8 @@ export const loginUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        token: generateToken(user.id),
+        accessToken: generateToken(user.id, user.role),
+        refreshToken: generateRefreshToken(user.id),
       });
     } else {
       return next(new AppError("Invalid email or password", 401));

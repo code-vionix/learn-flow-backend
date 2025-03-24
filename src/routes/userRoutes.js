@@ -1,34 +1,37 @@
-import express from "express"
+import express from "express";
 import {
-  getUsers,
-  getUserById,
   createUser,
-  updateUser,
   deleteUser,
-  loginUser,
-  registerUser,
+  getUserById,
   getUserProfile,
-} from "../controllers/userController.js"
-import { protect, restrictTo } from "../middleware/auth.js"
+  getUsers,
+  loginUser,
+  regenerateAccessToken,
+  registerUser,
+  updateUser,
+} from "../controllers/userController.js";
+import { protect, restrictTo } from "../middleware/auth.js";
 
-const router = express.Router()
+const router = express.Router();
 
 // Public routes
-router.post("/register", registerUser) //api/v1/users/register
-router.post("/login", loginUser) //api/v1/users/login
+router.post("/register", registerUser); //api/v1/users/register
+router.post("/login", loginUser); //api/v1/users/login
 
 // Protected routes
-router.use(protect)
+router.use(protect);
+
+// Token rotation route
+router.post("/access-token", regenerateAccessToken); //api/v1/users/access-token
 
 // User profile
-router.get("/profile", getUserProfile) //api/v1/users/profile
+router.get("/profile", getUserProfile); //api/v1/users/profile
 
 // Admin only routes
-router.use(restrictTo("admin"))
+router.use(restrictTo("admin"));
 
-router.route("/").get(getUsers).post(createUser) //api/v1/users
+router.route("/").get(getUsers).post(createUser); //api/v1/users
 
-router.route("/:id").get(getUserById).put(updateUser).delete(deleteUser) //api/v1/users/:id
+router.route("/:id").get(getUserById).put(updateUser).delete(deleteUser); //api/v1/users/:id
 
-export default router
-
+export default router;

@@ -159,7 +159,7 @@ model Instructor {
   youtube   String? // Sifat
   createdAt DateTime?          @default(now()) @map("created_at") // Talha
   updatedAt DateTime?          @default(now()) @map("updated_at") // Talha
-  deletedAt DateTime?
+  deletedAt DateTime?          @map("deleted_at")
   Course    Course[]
   ratings   InstructorRating[]
 
@@ -182,8 +182,10 @@ model Course {
   id                 String       @id @default(auto()) @map("_id") @db.ObjectId
   title              String
   subtitle           String?
-  category           String?
-  subCategory        String?
+  categoryId         String?      @db.ObjectId
+  category           Category?    @relation(fields: [categoryId], references: [id])
+  subCategoryId      String?      @db.ObjectId
+  subCategory        SubCategory? @relation(fields: [subCategoryId], references: [id])
   topic              String?
   description        String?
   language           String?
@@ -212,7 +214,6 @@ model Course {
   updatedAt              DateTime         @updatedAt
   modules                Module[]
   enrollments            Enrollment[]
-  categories             CourseCategory[]
   assignments            Assignment[]
   quizzes                Quiz[]
   learnings              Learnings[]
@@ -238,6 +239,7 @@ model Learnings {
   courseId    String   @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime? @map("deleted_at")
 
   @@map("learnings")
 }
@@ -375,27 +377,17 @@ model Enrollment {
   @@map("enrollments")
 }
 
-model CourseCategory {
-  id            String       @id @default(auto()) @map("_id") @db.ObjectId
-  courseId      String       @db.ObjectId
-  course        Course       @relation(fields: [courseId], references: [id])
-  categoryId    String       @db.ObjectId
-  category      Category     @relation(fields: [categoryId], references: [id])
-  SubCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
-  subCategoryId String?      @db.ObjectId
-
-  @@map("course_categories")
-}
 
 model Category {
   id          String           @id @default(auto()) @map("_id") @db.ObjectId
   name        String           @unique
-  courses     CourseCategory[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   SubCategory SubCategory[]
+  deletedAt   DateTime?        @map("deleted_at")
 
   @@map("categories")
+  Course Course[]
 }
 
 model SubCategory {
@@ -403,11 +395,12 @@ model SubCategory {
   name       String           @unique
   categoryId String?          @db.ObjectId
   category   Category?        @relation(fields: [categoryId], references: [id])
-  courses    CourseCategory[]
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
+  deletedAt  DateTime?        @map("deleted_at")
 
   @@map("subcategories")
+  Course Course[]
 }
 
 model Assignment {
