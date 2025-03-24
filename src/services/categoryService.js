@@ -1,42 +1,49 @@
 import bcrypt from "bcryptjs"
 import { prisma } from "../models/index.js"
 import { AppError } from "../middleware/errorHandler.js"
-import { createCategory } from "../controllers/categoryController.js"
+import { createCategory, getAllCategories } from "../controllers/categoryController.js"
+
+export const getCategoryService = {
+  getAllCategories: async () => {
+    return await prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    })
+  },
+}
 
 export const categoryService = {
-//   getAllUsers: async () => {
-//     return await prisma.user.findMany({
-//       select: {
-//         id: true,
-//         firstName: true,
-//         lastName: true,
-//         email: true,
-//         role: true,
-//         createdAt: true,
-//       },
-//     })
-//   },
-
-  // Create a new user
   createCategory: async (categoryData) => {
-    const { course, category, subCategory } = categoryData
+    const { name } = categoryData
  
-    const categories = await prisma.courseCategory.create({
+    const categories = await prisma.category.create({
       data: {
-        course,
-        category,
-        subCategory
+       name
       },
       select: {
-        course: true,
-        category: true,
-        subCategory: true
+       name : true,
       },
     })
 
     return categories
   },
-
-
 }
 
+
+//update category
+export const updateCategoryService = {
+  updateCategory: async (categoryId, categoryData) => {
+    const { name } = categoryData
+
+    const category = await prisma.category.update({
+      where: { id: categoryId },
+      data: {
+        name,
+      },
+    })
+
+    return category
+  },
+}

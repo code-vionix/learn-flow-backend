@@ -210,7 +210,7 @@ model Course {
   updatedAt              DateTime         @updatedAt
   modules                Module[]
   enrollments            Enrollment[]
-  categories             CourseCategory[]
+  // categories             CourseCategory[]
   assignments            Assignment[]
   quizzes                Quiz[]
   learnings              Learnings[]
@@ -373,25 +373,13 @@ model Enrollment {
   @@map("enrollments")
 }
 
-model CourseCategory {
-  id            String       @id @default(auto()) @map("_id") @db.ObjectId
-  courseId      String       @db.ObjectId
-  course        Course?       @relation(fields: [courseId], references: [id])
-  categoryId    String       @db.ObjectId
-  category      Category     @relation(fields: [categoryId], references: [id])
-  SubCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
-  subCategoryId String?      @db.ObjectId
-
-  @@map("course_categories")
-}
-
 model Category {
   id          String           @id @default(auto()) @map("_id") @db.ObjectId
   name        String           @unique
-  courses     CourseCategory[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   SubCategory SubCategory[]
+  deletedAt   DateTime?        @map("deleted_at")
 
   @@map("categories")
 }
@@ -401,9 +389,9 @@ model SubCategory {
   name       String           @unique
   categoryId String?          @db.ObjectId
   category   Category?        @relation(fields: [categoryId], references: [id])
-  courses    CourseCategory[]
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
+  deletedAt  DateTime?        @map("deleted_at")
 
   @@map("subcategories")
 }

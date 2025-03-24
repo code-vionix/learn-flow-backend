@@ -1,38 +1,24 @@
-import { categoryService } from "../services/categoryService.js"
+import { categoryService, getCategoryService, updateCategoryService } from "../services/categoryService.js"
 
-// export const getUsers = async (req, res, next) => {
-//   try {
-//     const users = await userService.getAllUsers()
-//     res.json(users)
-//   } catch (error) {
-//     next(error)
-//   }
-// }
 
-// model CourseCategory {
-//   id            String       @id @default(auto()) @map("_id") @db.ObjectId
-//   courseId      String       @db.ObjectId
-//   course        Course?       @relation(fields: [courseId], references: [id])
-//   categoryId    String       @db.ObjectId
-//   category      Category     @relation(fields: [categoryId], references: [id])
-//   SubCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
-//   subCategoryId String?      @db.ObjectId
-
-//   @@map("course_categories")
-// }
+// GET all categories
+export const getAllCategories = async (req, res, next) => {
+  try {
+    const categories = await getCategoryService.getAllCategories()
+    res.status(200).json(categories)
+  } catch (error) {
+    next(error)
+  }
+}
 
 export const createCategory = async (req, res, next) => {
   try {
       const { 
-          course,
-          category,
-          subCategory
+          name
      } = req?.body
 
     const categoryInfo = await categoryService.createCategory({
-      course,
-      category,
-      subCategory
+      name
     })
 
     res.status(201).json(categoryInfo)
@@ -41,3 +27,13 @@ export const createCategory = async (req, res, next) => {
   }
 }
 
+
+// update category
+  export const updateCategory = async (req, res, next) => {
+    try {
+      const category = await updateCategoryService.updateCategory(req.params.id, req.body)
+      res.status(200).json(category)
+    } catch (error) {
+      next(error)
+    }
+  }
