@@ -159,6 +159,7 @@ model Instructor {
   youtube   String? // Sifat
   createdAt DateTime?          @default(now()) @map("created_at") // Talha
   updatedAt DateTime?          @default(now()) @map("updated_at") // Talha
+  deletedAt DateTime?          @map("deleted_at")
   Course    Course[]
   ratings   InstructorRating[]
 
@@ -181,8 +182,10 @@ model Course {
   id                 String       @id @default(auto()) @map("_id") @db.ObjectId
   title              String
   subtitle           String?
-  category           String?
-  subCategory        String?
+  categoryId         String?      @db.ObjectId
+  category           Category?    @relation(fields: [categoryId], references: [id])
+  subCategoryId      String?      @db.ObjectId
+  subCategory        SubCategory? @relation(fields: [subCategoryId], references: [id])
   topic              String?
   description        String?
   language           String?
@@ -210,7 +213,10 @@ model Course {
   updatedAt              DateTime         @updatedAt
   modules                Module[]
   enrollments            Enrollment[]
+<<<<<<< HEAD
   // categories             CourseCategory[]
+=======
+>>>>>>> 224fda28af1bd38cf2ddf76cb3fe4b045aed2989
   assignments            Assignment[]
   quizzes                Quiz[]
   learnings              Learnings[]
@@ -236,6 +242,7 @@ model Learnings {
   courseId    String   @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime? @map("deleted_at")
 
   @@map("learnings")
 }
@@ -373,6 +380,10 @@ model Enrollment {
   @@map("enrollments")
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 224fda28af1bd38cf2ddf76cb3fe4b045aed2989
 model Category {
   id          String           @id @default(auto()) @map("_id") @db.ObjectId
   name        String           @unique
@@ -382,6 +393,7 @@ model Category {
   deletedAt   DateTime?        @map("deleted_at")
 
   @@map("categories")
+  Course Course[]
 }
 
 model SubCategory {
@@ -394,6 +406,7 @@ model SubCategory {
   deletedAt  DateTime?        @map("deleted_at")
 
   @@map("subcategories")
+  Course Course[]
 }
 
 model Assignment {
