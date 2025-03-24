@@ -1,11 +1,11 @@
 import express from "express";
-import { createCourse } from "../controllers/courseController.js";
+import { createCourse, getAllCourse } from "../controllers/courseController.js";
 
 const router = express.Router();
 
 // Public routes
 router.post("/", createCourse);
-// router.get("/", createCourse);
+router.get("/", getAllCourse);
 // router.patch("/", createCourse);
 // router.put("/", createCourse);
 
