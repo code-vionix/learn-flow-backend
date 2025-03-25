@@ -7,6 +7,7 @@ import subCategoryRouter from "./subCategoryRoute.js";
 
 import { notFound } from "./../middleware/errorHandler.js";
 import courseRoutes from "./courseRoutes.js";
+import instructorRatings from "./instructorRating.js";
 
 const router = express.Router();
 
@@ -18,6 +19,7 @@ router.use("/sub_category", subCategoryRouter);
 
 router.use("/instructors", instructorRoutes); //api/v1/instructors
 router.use("/courses", courseRoutes); //api/v1/instructors
+router.use("/instructor-ratings", instructorRatings);
 
 // Handle 404 for API routes
 router.use(notFound);
