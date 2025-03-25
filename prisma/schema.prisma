@@ -270,6 +270,7 @@ model Module {
   lessons     Lesson[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
   order       Int? //Order of the modules
   Assignments Assignment[]
 
@@ -287,6 +288,7 @@ model Lesson {
   module                Module           @relation(fields: [moduleId], references: [id])
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
+  deletedAt             DateTime?
   Quiz                  Quiz[]           @relation("QuizToLesson")
   Note                  Note[]
   Comment               Comment[]
@@ -413,9 +415,9 @@ model Assignment {
   submissions          Submission[]
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
-  maxPoints            Int? //Maximum points for the assignment
+  maxPoints            Int?
   allowLateSubmissions Boolean?     @default(true)
-
+  deletedAt            DateTime?
   Course   Course? @relation(fields: [courseId], references: [id])
   courseId String? @db.ObjectId
 
