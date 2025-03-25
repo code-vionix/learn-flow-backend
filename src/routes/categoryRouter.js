@@ -1,23 +1,17 @@
 import express from "express"
- 
-import { protect, restrictTo } from "../middleware/auth.js"
-import { createCategory, getAllCategories } from "../controllers/categoryController.js"
-import { updateCategoryService } from "../services/categoryService.js";
+import { createCategory, deleteCategory, getAllCategories, getSingleCategory, updateCategory } from "../controllers/categoryController.js"
 
 const categoryRouter = express.Router();
 
-// Public routes
 categoryRouter.get("/", getAllCategories)
-categoryRouter.post("/create-category", createCategory) //api/v1/users/register
-// update category
-categoryRouter.patch("/:id", async (req, res) => {
-  try {
-    const category = await updateCategoryService.updateCategory(req.params.id, req.body)
-    res.status(200).json(category)
-  } catch (error) {
-    next(error)
-  }
-})
+categoryRouter.get("/:id", getSingleCategory)
+
+categoryRouter.post("/", createCategory) 
+
+categoryRouter.patch("/:id", updateCategory) 
+
+categoryRouter.delete("/:id", deleteCategory);
+ 
 
 
 export default categoryRouter

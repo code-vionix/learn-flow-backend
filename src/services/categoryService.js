@@ -1,21 +1,52 @@
 import bcrypt from "bcryptjs"
 import { prisma } from "../models/index.js"
 import { AppError } from "../middleware/errorHandler.js"
-import { createCategory, getAllCategories } from "../controllers/categoryController.js"
 
-export const getCategoryService = {
+export const categoryService = {
   getAllCategories: async () => {
     return await prisma.category.findMany({
       select: {
         id: true,
         name: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+
+        SubCategory: {
+          select: {
+            id: true,
+            name: true,
+            createdAt: true,
+            updatedAt: true,
+            deletedAt: true
+          },
+        },
       },
     })
   },
-}
 
-export const categoryService = {
-  createCategory: async (categoryData) => {
+  //get single category with id
+  getSingleCategories: async (id) => {
+    const categoriesData = await prisma.category.findMany({
+      where: { id },
+      include: {
+        SubCategory: {
+          select: {
+            id: true,
+            name: true,
+            createdAt: true,
+            updatedAt: true,
+            deletedAt: true
+          }, 
+        },
+      }
+    })
+  
+    return categoriesData
+  },
+
+
+   createCategory: async (categoryData) => {
     const { name } = categoryData
  
     const categories = await prisma.category.create({
@@ -23,17 +54,17 @@ export const categoryService = {
        name
       },
       select: {
-       name : true,
+        id: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
       },
     })
 
     return categories
   },
-}
-
-
-//update category
-export const updateCategoryService = {
+   
   updateCategory: async (categoryId, categoryData) => {
     const { name } = categoryData
 
@@ -42,8 +73,29 @@ export const updateCategoryService = {
       data: {
         name,
       },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
     })
 
     return category
   },
+
+  deleteCategory: async (categoryId) => {
+     await prisma.category.update({
+      where: { id: categoryId },
+      data: {
+        deletedAt: new Date(),
+      },
+    })
+
+    return ({
+      status: "success",
+      message: `Category with id ${categoryId} deleted successfully`,
+    })
+  }
 }

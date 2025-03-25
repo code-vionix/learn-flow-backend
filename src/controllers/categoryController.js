@@ -1,16 +1,27 @@
-import { categoryService, getCategoryService, updateCategoryService } from "../services/categoryService.js"
+import { categoryService } from "../services/categoryService.js"
 
 
 // GET all categories
 export const getAllCategories = async (req, res, next) => {
   try {
-    const categories = await getCategoryService.getAllCategories()
+    const categories = await categoryService.getAllCategories()
     res.status(200).json(categories)
   } catch (error) {
     next(error)
   }
 }
 
+// get single category
+export const getSingleCategory = async (req, res, next) => {
+  try {
+    const category = await categoryService.getSingleCategories(req.params.id)
+    res.status(200).json(category)
+  } catch (error) {
+    next(error)
+  }
+}
+
+// POST create category
 export const createCategory = async (req, res, next) => {
   try {
       const { 
@@ -31,9 +42,21 @@ export const createCategory = async (req, res, next) => {
 // update category
   export const updateCategory = async (req, res, next) => {
     try {
-      const category = await updateCategoryService.updateCategory(req.params.id, req.body)
+      const category = await categoryService.updateCategory(req.params.id, req.body)
       res.status(200).json(category)
     } catch (error) {
       next(error)
     }
+}
+  
+//delete category
+export const deleteCategory = async (req, res, next) => {
+  try {
+    const category = await categoryService.deleteCategory(req.params.id)
+    res.status(200).json(category);
+
+    return `Category with id ${req.params.id} deleted successfully`
+  } catch (error) {
+    next(error)
   }
+}

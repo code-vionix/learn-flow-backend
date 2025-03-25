@@ -213,10 +213,6 @@ model Course {
   updatedAt              DateTime         @updatedAt
   modules                Module[]
   enrollments            Enrollment[]
-<<<<<<< HEAD
-  // categories             CourseCategory[]
-=======
->>>>>>> 224fda28af1bd38cf2ddf76cb3fe4b045aed2989
   assignments            Assignment[]
   quizzes                Quiz[]
   learnings              Learnings[]
@@ -380,10 +376,7 @@ model Enrollment {
   @@map("enrollments")
 }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 224fda28af1bd38cf2ddf76cb3fe4b045aed2989
 model Category {
   id          String           @id @default(auto()) @map("_id") @db.ObjectId
   name        String           @unique
