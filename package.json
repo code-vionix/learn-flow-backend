@@ -9,22 +9,23 @@
     "lint": "eslint . --ext .js"
   },
   "dependencies": {
-    "date-fns": "4.1.0",
-    "zod": "^3.24.1",
-    "prisma": "latest",
-    "express": "latest",
+    "@prisma/client": "^6.5.0",
+    "bcryptjs": "latest",
     "cors": "latest",
-    "helmet": "latest",
-    "morgan": "latest",
+    "date-fns": "4.1.0",
     "dotenv": "latest",
+    "express": "latest",
+    "helmet": "latest",
     "jsonwebtoken": "latest",
-    "@prisma/client": "latest",
-    "bcryptjs": "latest"
+    "mongodb": "^6.15.0",
+    "morgan": "latest",
+    "prisma": "latest",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
-    "nodemon": "latest",
     "eslint": "^8",
     "eslint-config-prettier": "^9",
+    "nodemon": "latest",
     "prettier": "^3"
   }
 }
