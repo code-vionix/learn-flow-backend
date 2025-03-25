@@ -3,28 +3,75 @@ import { prisma } from "../models/index.js";
 
 // create courese
 export const createCourse = async (req, res, next) => {
-  const { title, teacherId } = req.body;
+  const {
+    title,
+    teacherId,
+    subtitle,
+    categoryId,
+    subCategoryId,
+    topic,
+    language,
+    subtitleLanguages,
+    level,
+    duration,
+  } = req.body;
+
   try {
-    if (!title && !teacherId) {
-      return next(new AppError("Titel and Teacher requird", 400));
+    // Validate required fields
+    if (
+      !title ||
+      !teacherId ||
+      !subtitle ||
+      !categoryId ||
+      !subCategoryId ||
+      !topic ||
+      !language ||
+      !subtitleLanguages ||
+      !level ||
+      !duration
+    ) {
+      return next(new AppError("All fields are required", 400));
     }
-    // Create course
+
+    //  level is one of the allowed
+    const validLevels = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
+    if (!validLevels.includes(level)) {
+      return next(new AppError("Invalid level value", 400));
+    }
+
+    //  subtitleLanguages is an array
+    if (!Array.isArray(subtitleLanguages)) {
+      return next(new AppError("subtitleLanguages must be an array", 400));
+    }
+
+    // Create the course and include category and subcategory
     const course = await prisma.course.create({
       data: {
         teacherId,
         title,
+        subtitle,
+        categoryId,
+        subCategoryId,
+        topic,
+        language,
+        subtitleLanguages,
+        level,
+        duration,
+        deletedAt: null,
+      },
+      include: {
+        category: true, // Include category details
+        subCategory: true, // Include subcategory details
       },
     });
 
-    if (!course) {
-      return next(new AppError("Course create failed", 404));
-    }
-
-    if (course) {
-      res.status(201).json(course);
-    }
+    res.status(201).json({
+      success: true,
+      message: "Course created successfully",
+      data: course,
+    });
   } catch (error) {
-    return next(new AppError("something went wrong", 500));
+    return next(new AppError(error.message || "Something went wrong", 500));
   }
 };
 
