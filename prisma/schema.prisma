@@ -200,6 +200,7 @@ model Course {
   startDate          DateTime?
   endDate            DateTime?
   imageUrl           String?
+  deletedAt          DateTime?
   teacher            User         @relation("TeacherCourses", fields: [teacherId], references: [id])
   teacherId          String       @db.ObjectId
   status             CourseStatus @default(DRAFT)
