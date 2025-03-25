@@ -41,17 +41,15 @@ export const createInstructorRating = async (req, res, next) => {
 export const getInstructorRatings = async (req, res, next) => {
   try {
     const { instructorId } = req.params;
-    // const instructorId = "65fb3b5c8c12345e1a6d7f89";
 
     const ratings = await prisma.instructorRating.findMany({
-      where: { instructorId },
-      include: {
-        user: {
-          select: { firstName: true, lastName: true, imageUrl: true },
-        },
+      where: {
+        instructorId,
+        deletedAt: null, // Fetch only active ratings
       },
     });
 
+    // Return ratings
     res.status(200).json(ratings);
   } catch (error) {
     next(error);
@@ -97,8 +95,17 @@ export const updateInstructorRating = async (req, res, next) => {
 export const deleteInstructorRating = async (req, res, next) => {
   try {
     const { ratingId } = req.params;
-    const userId = req.user.id;
+    const userId = "67debbfbd62e2129820291dc"; // Replace with `req.user?.id` in production
 
+    // Validate input
+    if (!ratingId) {
+      return next(new AppError("Rating ID is required", 400));
+    }
+    if (!userId) {
+      return next(new AppError("Unauthorized request", 401));
+    }
+
+    // Check if the rating exists
     const existingRating = await prisma.instructorRating.findUnique({
       where: { id: ratingId },
     });
@@ -107,13 +114,26 @@ export const deleteInstructorRating = async (req, res, next) => {
       return next(new AppError("Rating not found", 404));
     }
 
-    if (existingRating.userId !== userId) {
+    // Check if `deletedAt` exists and is not null
+    if (existingRating.deletedAt !== null) {
+      return next(new AppError("Rating has already been deleted", 410));
+    }
+
+    // Ensure the user deleting the rating is the one who created it
+    if (String(existingRating.userId) !== String(userId)) {
       return next(new AppError("You can only delete your own rating", 403));
     }
 
-    await prisma.instructorRating.delete({ where: { id: ratingId } });
+    // Soft delete the rating
+    await prisma.instructorRating.update({
+      where: { id: ratingId },
+      data: { deletedAt: new Date() },
+    });
 
-    res.status(200).json({ message: "Rating deleted successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Rating deleted successfully",
+    });
   } catch (error) {
     next(error);
   }

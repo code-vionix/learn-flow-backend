@@ -176,6 +176,7 @@ model InstructorRating {
   comment      String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?  // Optional field for soft deletion
 }
 
 model Course {
