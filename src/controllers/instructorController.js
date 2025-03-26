@@ -37,19 +37,15 @@ export const createInstructor = async (req, res, next) => {
 };
 
 // get all instructor
-export const getAllInstructors = async (_req, res, next) => {
+export const getAllInstructors = async (_req, res) => {
   const instructors = await prisma.instructor.findMany({
     where: { deletedAt: null },
     orderBy: {
       createdAt: "desc",
     },
   });
-  if (!instructors) {
-    return next(new AppError("Instructors not found", 404));
-  }
-  if (instructors) {
-    res.status(200).json(instructors);
-  }
+
+  return res.status(200).json(instructors);
 };
 
 // get single instructors by id instructor
