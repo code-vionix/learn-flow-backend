@@ -76,21 +76,14 @@ export const createCourse = async (req, res, next) => {
 };
 
 //Get all course
-export const getAllCourse = async (req, res, next) => {
+export const getAllCourse = async (_req, res, next) => {
   try {
     // Create course
     const courses = await prisma.course.findMany({
       where: { deletedAt: null },
     });
 
-    // If no courses found, return a meaningful response
-    if (courses.length === 0) {
-      return next(new AppError("No courses found", 404));
-    }
-
-    if (courses) {
-      res.status(200).json(courses);
-    }
+    return res.status(200).json(courses);
   } catch (error) {
     return next(new AppError("something went wrong", 500));
   }
