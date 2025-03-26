@@ -1,5 +1,6 @@
 import express from "express";
 import instructorRoutes from "./instructorRoutes.js";
+import notificationRoute from "./notificationRoute.js";
 import userRoutes from "./userRoutes.js";
 
 import categoryRouter from "./categoryRouter.js";
@@ -20,6 +21,7 @@ router.use("/sub_category", subCategoryRouter);
 router.use("/instructors", instructorRoutes); //api/v1/instructors
 router.use("/courses", courseRoutes); //api/v1/instructors
 router.use("/instructor-ratings", instructorRatings);
+router.use("/notification", notificationRoute);
 
 // Handle 404 for API routes
 router.use(notFound);
