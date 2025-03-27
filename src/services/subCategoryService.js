@@ -43,30 +43,6 @@ export const subCategoryService = {
         return subCategories
   },
   
-// create subCategory with categoryId a specific category
-  // createSubCategory: async (subCategoryData) => {
-  //   const { name, categoryId } = subCategoryData;
-
-  //   const subCategory = await prisma.subCategory.create({
-  //     data: {
-  //       name,
-  //       categoryId,
-  //     },
-  //     include: {
-  //       category: {
-  //         select: {
-  //           id: true,
-  //           name: true,
-  //           createdAt: true,
-  //           updatedAt: true,
-  //           deletedAt: true
-  //         },
-  //       },
-  //    }
-  //   });
-
-  //   return subCategory
-  //       },
 
   createSubCategory: async (subCategoryData) => {
     const { name, categoryId } = subCategoryData;
