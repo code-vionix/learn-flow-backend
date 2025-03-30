@@ -2,7 +2,7 @@ import { AppError } from "../middleware/errorHandler.js";
 import { prisma } from "../models/index.js";
 
 // @desc    Create a new notification
-// @route   POST /api/v1/notifications
+// @route   POST /api/v1/notification
 // @access  Private
 export const createNotification = async (req, res, next) => {
   try {
@@ -31,7 +31,7 @@ export const createNotification = async (req, res, next) => {
 };
 
 // @desc    Get notifications for a user
-// @route   GET /api/v1/notifications
+// @route   GET /api/v1/notification
 // @access  Private
 export const getNotifications = async (req, res, next) => {
   try {
@@ -59,7 +59,7 @@ export const getNotifications = async (req, res, next) => {
   }
 };
 // @desc    Get a single notification
-// @route   GET /api/v1/notifications/:id
+// @route   GET /api/v1/notification/:id
 // @access  Private
 export const getNotificationById = async (req, res, next) => {
   try {
@@ -81,7 +81,7 @@ export const getNotificationById = async (req, res, next) => {
 };
 
 // @desc    Update a notification
-// @route   PUT /api/v1/notifications/:id
+// @route   PUT /api/v1/notification/:id
 // @access  Private
 export const updateNotification = async (req, res, next) => {
   try {
@@ -111,7 +111,7 @@ export const updateNotification = async (req, res, next) => {
 };
 
 // @desc    Delete a notification
-// @route   DELETE /api/v1/notifications/:id
+// @route   DELETE /api/v1/notification/:id
 // @access  Private
 export const deleteNotification = async (req, res, next) => {
   try {

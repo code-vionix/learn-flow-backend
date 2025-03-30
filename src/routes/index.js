@@ -18,6 +18,7 @@ import courseRoutes from "./courseRoutes.js";
 import { notFound } from "../middleware/errorHandler.js";
 
 import instructorRatings from "./instructorRating.js";
+import lessonRoute from "./lessonRoute.js";
 
 import moduleRouter from "./moduleRoute.js";
 import assignmentRouter from "./assignmentRouter.js";
@@ -37,6 +38,7 @@ router.use("/courses", courseRoutes); //api/v1/instructors
 
 router.use("/instructor-ratings", instructorRatings);
 router.use("/notification", notificationRoute);
+router.use("/lesson", lessonRoute);
 
 
 router.use("/module", moduleRouter);
