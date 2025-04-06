@@ -1,6 +1,10 @@
 import express from "express";
 import instructorRoutes from "./instructorRoutes.js";
 
+import notificationRoute from "./notificationRoute.js";
+
+
+
 import userRoutes from "./userRoutes.js";
 
 // import { notFound } from "../middleware/errorHandler.js"
@@ -34,6 +38,7 @@ router.use("/courses", courseRoutes); //api/v1/instructors
 
 
 router.use("/instructor-ratings", instructorRatings);
+router.use("/notification", notificationRoute);
 
 
 router.use("/module", moduleRouter);
