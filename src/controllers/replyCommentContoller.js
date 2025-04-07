@@ -47,9 +47,10 @@ export const createReply = async (req, res) => {
 // Get all replies
 export const getAllReplies = async (req, res) => {
   try {
-    const replies = await prisma.reply.findMany({
-      where: { deletedAt: null },
-    });
+    const allReplies = await prisma.reply.findMany();
+    const replies = allReplies.filter(
+      (reply) => reply.deletedAt === null || reply.deletedAt === undefined
+    );
 
     res.json(replies);
   } catch (error) {
@@ -63,10 +64,10 @@ export const getReplyById = async (req, res) => {
     const { id } = req.params;
 
     const reply = await prisma.reply.findUnique({
-      where: { id, deletedAt: null },
+      where: { id },
     });
 
-    if (!reply) {
+    if (!reply || (reply.deletedAt !== null && reply.deletedAt !== undefined)) {
       return res.status(404).json({ message: "Reply not found" });
     }
 
@@ -88,12 +89,14 @@ export const updateReply = async (req, res) => {
     }
 
     // Check if the reply exists and is not deleted
-    const existingReply = await prisma.reply.findFirst({
+    const existingReply = await prisma.reply.findUnique({
       where: { id },
-      select: { deletedAt: true },
     });
 
-    if (!existingReply) {
+    if (
+      !existingReply ||
+      ( existingReply.deletedAt !== null && existingReply.deletedAt !== undefined)
+    ) {
       return res
         .status(404)
         .json({ message: "Reply not found or already deleted" });
@@ -120,10 +123,13 @@ export const softDeleteReply = async (req, res) => {
     // Check if the reply exists and is not already deleted
     const existingReply = await prisma.reply.findFirst({
       where: { id },
-      select: { deletedAt: true },
     });
 
-    if (!existingReply) {
+    if (
+      !existingReply ||
+      (existingReply.deletedAt !== null &&
+        existingReply.deletedAt !== undefined)
+    ) {
       return res
         .status(404)
         .json({ message: "Reply not found or already deleted" });

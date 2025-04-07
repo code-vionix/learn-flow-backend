@@ -23,9 +23,11 @@ export const createComment = async (req, res) => {
 // Get all comments
 export const getAllComments = async (req, res) => {
   try {
-    const comments = await prisma.comment.findMany({
-      where: { deletedAt: null },
-    });
+    const allComments = await prisma.comment.findMany();
+    const comments = allComments.filter(
+      (comment) => comment.deletedAt === null || comment.deletedAt === undefined
+    );
+
     res.status(200).json(comments);
   } catch (error) {
     console.error("Error fetching comments:", error);
@@ -39,9 +41,12 @@ export const getCommentById = async (req, res) => {
     const { id } = req.params;
 
     const comment = await prisma.comment.findUnique({
-      where: { id, deletedAt: null },
+      where: { id },
     });
-    if (!comment) {
+    if (
+      !comment ||
+      (comment.deletedAt !== null && comment.deletedAt !== undefined)
+    ) {
       return res.status(404).json({ message: "Comment not found" });
     }
 
@@ -59,10 +64,14 @@ export const updateComment = async (req, res) => {
     const { comment } = req.body;
 
     const existingComment = await prisma.comment.findUnique({
-      where: { id, deletedAt: null },
+      where: { id },
     });
 
-    if (!existingComment) {
+    if (
+      !existingComment ||
+      (existingComment.deletedAt !== null &&
+        existingComment.deletedAt !== undefined)
+    ) {
       return res.status(404).json({ message: "Comment not found" });
     }
 
@@ -85,10 +94,14 @@ export const deleteComment = async (req, res) => {
 
     // Check if the comment exists
     const existingComment = await prisma.comment.findUnique({
-      where: { id, deletedAt: null },
+      where: { id },
     });
 
-    if (!existingComment) {
+    if (
+      !existingComment ||
+      (existingComment.deletedAt !== null &&
+        existingComment.deletedAt !== undefined)
+    ) {
       return res.status(404).json({ message: "Comment not found" });
     }
 
