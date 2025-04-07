@@ -2,12 +2,17 @@ import { prisma } from "../models/index.js"
 export const questionService = {
   
   getAllQuestions: async () => {
-    return await prisma.question.findMany({
+    return await prisma.quiz.findMany({
       include: {
-        quiz: {
+        questions: {
           select: {
             id: true,
-            title: true,
+            questionText: true,
+            options: true,
+            correctAnswer: true,
+            questionType: true,
+            partialCredit: true,
+            feedback: true,
           },
         },
       },
@@ -24,6 +29,7 @@ export const questionService = {
             title: true,
           },
         },
+        
       },
     });
   },
@@ -39,6 +45,14 @@ export const questionService = {
         questionType,
         partialCredit,
         feedback,
+      },
+      include: {
+        quiz: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
       },
     });
   },

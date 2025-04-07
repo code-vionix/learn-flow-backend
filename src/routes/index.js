@@ -21,7 +21,8 @@ import assignmentRouter from "./assignmentRouter.js";
 import { notFound } from "../middleware/errorHandler.js";
 import quizRouter from "./quizRouter.js";
 import questionRouter from "./questionRouter.js";
-
+import lessonRouter from "./lessonRoute.js";
+ 
 
 const router = express.Router();
 
@@ -44,6 +45,8 @@ router.use("/module", moduleRouter);
 router.use("/assignment", assignmentRouter);
 
 router.use("/quiz", quizRouter);
+
+router.use("/lesson", lessonRouter);
 
 router.use("/question", questionRouter);
 
