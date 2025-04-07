@@ -376,7 +376,7 @@ model Enrollment {
   courseId       String   @db.ObjectId
   course         Course   @relation(fields: [courseId], references: [id])
   enrollmentDate DateTime @default(now())
-  Payment        Payment[]
+  payment        Payment[]
 
   @@map("enrollments")
 }
@@ -514,6 +514,7 @@ model Comment {
   comment   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   Reply Reply[]
 }
@@ -527,6 +528,7 @@ model Reply {
   reply     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 }
 
 model Chat {
