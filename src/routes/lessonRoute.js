@@ -7,7 +7,7 @@ import {
   updateLesson,
 } from "../controllers/lessonController.js";
 const router = express.Router();
-router.post("/", createLesson);
+router.post("/", createLesson); //"/api/vi"
 router.get("/", getLessons);
 router.get("/:id", getLessonById);
 router.put("/:id", updateLesson);
