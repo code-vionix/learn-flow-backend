@@ -512,6 +512,7 @@ model Comment {
   comment   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   Reply Reply[]
 }
@@ -525,6 +526,7 @@ model Reply {
   reply     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 }
 
 model Chat {
@@ -642,6 +644,7 @@ model Notification {
   message   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+   deletedAt              DateTime?
 }
 
 model Cupon {
