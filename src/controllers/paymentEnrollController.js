@@ -3,182 +3,127 @@ import { prisma } from "../models/index.js";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-export const createPaymentEnroll = async (req, res) => {
+export const createCheckoutSession = async (req, res) => {
   try {
-    const {
-      amount,
-      currency,
-      method,
-      cardId,
-      userId,
-      courseId,
-      paymentMethodId,
-    } = req.body;
+    const { userId, courseId, amount, currency } = req.body;
 
-    // Check for missing required fields
-    if (
-      !amount ||
-      !currency ||
-      !method ||
-      !cardId ||
-      !userId ||
-      !courseId ||
-      !paymentMethodId
-    ) {
+    // Validate input fields (simple check)
+    if (!userId || !courseId || !amount || !currency) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Validate course
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-    });
+    // Get course data to use for session
+    const course = await prisma.course.findUnique({ where: { id: courseId } });
     if (!course) return res.status(400).json({ error: "Invalid courseId" });
 
-    // Validate user
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-    if (!user) return res.status(400).json({ error: "Invalid userId" });
-
-    // Validate card
-    const card = await prisma.paymentCard.findUnique({
-      where: { id: cardId },
-    });
-    if (!card) return res.status(400).json({ error: "Invalid cardId" });
-
-    // Check for existing enrollment
-    // const existingEnrollment = await prisma.enrollment.findFirst({
-    //   where: { userId, courseId },
-    // });
-    // if (existingEnrollment) {
-    //   return res
-    //     .status(400)
-    //     .json({ error: "User already enrolled in this course" });
-    // }
-
-    // Create a Stripe payment intent using the payment method ID
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Stripe expects the amount in cents
-      currency: currency,
-      payment_method: paymentMethodId, // Payment method ID from the frontend
-      confirm: true, // Confirm the payment immediately
-    });
-
-    // If payment is successful, proceed to create the payment and enrollment
-    if (paymentIntent.status === "succeeded") {
-      // Create payment record in the database
-      const payment = await prisma.payment.create({
-        data: {
-          amount,
-          currency,
-          method,
-          cardId,
-          userId,
-          courseId,
-          status: "Success",
-          paymentIntentId: paymentIntent.id, // Store the Stripe payment intent ID
-        },
-      });
-
-      // Create enrollment
-      const enrollment = await prisma.enrollment.create({
-        data: {
-          userId,
-          courseId,
-          payment: {
-            connect: { id: payment.id },
+    // Create a Stripe Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"], //payment methods allowed
+      line_items: [
+        {
+          price_data: {
+            currency: currency,
+            product_data: {
+              name: `${course.title} - e-tutor`,
+              description: `Purchase for course ${course.title} on e-tutor platform`,
+            },
+            unit_amount: amount * 100,
           },
+          quantity: 1,
         },
-      });
+      ],
+      mode: "payment",
+      success_url: `http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}&course_id=${courseId}`, // URL to redirect on success
+      cancel_url: `http://localhost:3000/cancel`, // URL to redirect on cancel
+      metadata: {
+        userId: userId,
+        courseId: courseId,
+        platform: "e Tutor",
+      },
+    });
 
-      // Update payment with enrollmentId
-      await prisma.payment.update({
-        where: { id: payment.id },
-        data: { enrollmentId: enrollment.id },
-      });
-
-      return res.status(201).json({ payment, enrollment });
-    } else {
-      return res.status(402).json({ error: "Payment failed" });
-    }
+    // Respond with session ID to the frontend
+    return res.json({ sessionId: session.id });
   } catch (err) {
-    console.error("Payment Error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error creating checkout session:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// export const createPaymentEnroll = async (req, res) => {
-//   try {
-//     const { amount, currency, method, cardId, userId, courseId } = req.body;
+export const stripeWebhook = async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  let event;
 
-//     // Check for missing required fields
-//     if (!amount || !currency || !method || !cardId || !userId || !courseId) {
-//       return res.status(400).json({ error: "Missing required fields" });
-//     }
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.error("Webhook signature verification failed", err);
+    return res.status(400).send(`Webhook error: ${err.message}`);
+  }
 
-//     // Validate course
-//     const course = await prisma.course.findUnique({
-//       where: { id: courseId },
-//     });
-//     if (!course) return res.status(400).json({ error: "Invalid courseId" });
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
 
-//     // Validate user
-//     const user = await prisma.user.findUnique({
-//       where: { id: userId },
-//     });
-//     if (!user) return res.status(400).json({ error: "Invalid userId" });
+    const userId = session.metadata.userId;
+    const courseId = session.metadata.courseId;
+    const paymentIntentId = session.payment_intent;
+    const amount = session.amount_total / 100;
+    const currency = session.currency;
 
-//     // Validate card
-//     const card = await prisma.paymentCard.findUnique({
-//       where: { id: cardId },
-//     });
-//     if (!card) return res.status(400).json({ error: "Invalid cardId" });
+    try {
+      await handlePaymentSuccess({
+        userId,
+        courseId,
+        paymentIntentId,
+        amount,
+        currency,
+        method: "card",
+      });
+    } catch (err) {
+      console.error("Failed to handle payment success:", err.message);
+      return res.status(500).send("Internal server error");
+    }
+  }
+  res.status(200).send("Event received");
+};
 
-//     // Simulate payment success (replace with real Stripe logic)
-//     const paymentStatus = "Success";
+const handlePaymentSuccess = async ({
+  userId,
+  courseId,
+  paymentIntentId,
+  amount,
+  currency,
+  method,
+}) => {
+  const payment = await prisma.payment.create({
+    data: {
+      userId,
+      courseId,
+      amount,
+      currency,
+      method,
+      status: "Success",
+      paymentIntentId,
+    },
+  });
 
-//     // Create payment
-//     const payment = await prisma.payment.create({
-//       data: {
-//         amount,
-//         currency,
-//         method,
-//         cardId,
-//         userId,
-//         courseId,
+  const enrollment = await prisma.enrollment.create({
+    data: {
+      userId,
+      courseId,
+    },
+  });
 
-//         status: paymentStatus,
-//       },
-//     });
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: {
+      enrollmentId: enrollment.id,
+    },
+  });
+};
 
-//     // If payment is successful, create enrollment and update payment
-//     if (payment.status === "Success") {
-//       const enrollment = await prisma.enrollment.create({
-//         data: {
-//           userId,
-//           courseId,
-//           payment: {
-//             connect: { id: payment.id }, // Link the payment to the enrollment
-//           },
-//         },
-//       });
-
-//       // Update payment with enrollmentId
-//       await prisma.payment.update({
-//         where: { id: payment.id },
-//         data: { enrollmentId: enrollment.id },
-//       });
-
-//       return res.status(201).json({ payment, enrollment });
-//     } else {
-//       return res.status(402).json({ error: "Payment failed" });
-//     }
-//   } catch (err) {
-//     console.error("Payment Error:", err);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// };
 
 export const getAllPayments = async (req, res) => {
   try {

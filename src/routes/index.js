@@ -19,7 +19,7 @@ import instructorRatings from "./instructorRating.js";
 
 import assignmentRouter from "./assignmentRouter.js";
 
-import moduleRouter from "./moduleRoute.js";
+// import moduleRouter from "./moduleRoute.js";
 
 
 import commentRouter from "./commentRouter.js"
