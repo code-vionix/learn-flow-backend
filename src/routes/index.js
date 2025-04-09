@@ -1,29 +1,33 @@
 import express from "express";
 import instructorRoutes from "./instructorRoutes.js";
 
+import lessonRoute from "./lessonRoute.js";
 import notificationRoute from "./notificationRoute.js";
 
 import userRoutes from "./userRoutes.js";
 
-import { notFound } from "../middleware/errorHandler.js"
+
+import { notFound } from "../middleware/errorHandler.js";
 
 
 import categoryRouter from "./categoryRouter.js";
 import subCategoryRouter from "./subCategoryRoute.js";
 
-// import { notFound } from "./../middleware/errorHandler.js";
 import courseRoutes from "./courseRoutes.js";
-// import { notFound } from "../middleware/errorHandler.js";
 
 import instructorRatings from "./instructorRating.js";
 
 import assignmentRouter from "./assignmentRouter.js";
+
+import moduleRouter from "./moduleRoute.js";
+
 
 import commentRouter from "./commentRouter.js"
 import replyCommentRouter from "./replyCommentRouter.js"
 import moduleRouter from "./moduleRoute.js";
 import cardRouter from "./paymentCardRoute.js";
 import enrollRoute from "./paymentEnrollRouter.js";
+
 
 const router = express.Router();
 
@@ -43,11 +47,15 @@ router.use("/module", moduleRouter);
 
 router.use("/assignment", assignmentRouter);
 
+
+router.use("/lesson", lessonRoute);
+
 router.use("/comments", commentRouter)
 router.use("/reply-comment", replyCommentRouter)
 
 router.use("/payment", cardRouter);
 router.use("/course", enrollRoute)
+
 
 
 // Handle 404 for API routes
