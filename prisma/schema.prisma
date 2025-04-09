@@ -618,11 +618,11 @@ model Payment {
   user                   User?       @relation(fields: [userId], references: [id])
   courseId               String?     @db.ObjectId
   course                 Course?     @relation(fields: [courseId], references: [id])
-  enrollmentId           String?     @db.ObjectId
-  enrollment             Enrollment? @relation((fields: [enrollmentId] , references: [id]))
+  enrollmentId           String?      @db.ObjectId
+  enrollment             Enrollment?  @relation(fields: [enrollmentId], references: [id])
 }
 
-// todo enrollment id
+
 
 model Refund {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId

@@ -5,7 +5,7 @@ import notificationRoute from "./notificationRoute.js";
 
 import userRoutes from "./userRoutes.js";
 
-// import { notFound } from "../middleware/errorHandler.js"
+import { notFound } from "../middleware/errorHandler.js"
 
 
 import categoryRouter from "./categoryRouter.js";
@@ -21,6 +21,9 @@ import assignmentRouter from "./assignmentRouter.js";
 
 import commentRouter from "./commentRouter.js"
 import replyCommentRouter from "./replyCommentRouter.js"
+import moduleRouter from "./moduleRoute.js";
+import cardRouter from "./paymentCardRoute.js";
+import enrollRoute from "./paymentEnrollRouter.js";
 
 const router = express.Router();
 
@@ -44,6 +47,7 @@ router.use("/comments", commentRouter)
 router.use("/reply-comment", replyCommentRouter)
 
 router.use("/payment", cardRouter);
+router.use("/course", enrollRoute)
 
 
 // Handle 404 for API routes
