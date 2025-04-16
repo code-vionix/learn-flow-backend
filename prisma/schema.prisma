@@ -376,9 +376,11 @@ model Enrollment {
   courseId       String   @db.ObjectId
   course         Course   @relation(fields: [courseId], references: [id])
   enrollmentDate DateTime @default(now())
+  payment        Payment[]
 
   @@map("enrollments")
 }
+
 
 
 model Category {
@@ -593,7 +595,7 @@ model PaymentCard {
   cvv        String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
+  deletedAt  DateTime?
   Payment Payment[]
 }
 
@@ -616,7 +618,11 @@ model Payment {
   user                   User?       @relation(fields: [userId], references: [id])
   courseId               String?     @db.ObjectId
   course                 Course?     @relation(fields: [courseId], references: [id])
+  enrollmentId           String?      @db.ObjectId
+  enrollment             Enrollment?  @relation(fields: [enrollmentId], references: [id])
 }
+
+
 
 model Refund {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId

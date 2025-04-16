@@ -19,11 +19,14 @@ import instructorRatings from "./instructorRating.js";
 
 import assignmentRouter from "./assignmentRouter.js";
 
-import moduleRouter from "./moduleRoute.js";
+// import moduleRouter from "./moduleRoute.js";
 
 
 import commentRouter from "./commentRouter.js"
 import replyCommentRouter from "./replyCommentRouter.js"
+import moduleRouter from "./moduleRoute.js";
+import cardRouter from "./paymentCardRoute.js";
+import enrollRoute from "./paymentEnrollRouter.js";
 
 
 const router = express.Router();
@@ -49,6 +52,9 @@ router.use("/lesson", lessonRoute);
 
 router.use("/comments", commentRouter)
 router.use("/reply-comment", replyCommentRouter)
+
+router.use("/payment", cardRouter);
+router.use("/course", enrollRoute)
 
 
 
