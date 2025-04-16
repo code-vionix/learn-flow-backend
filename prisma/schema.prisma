@@ -110,8 +110,8 @@ model User {
   reviews                reviews[]
   Comment                Comment[]
   Reply                  Reply[]
-  Chat                   Chat[]
-  Message                Message[]
+  sentMessages           Chat[]   @relation("SentMessages")
+  receivedMessages       Chat[]  @relation("ReceivedMessages")
   PaymentCard            PaymentCard[]
   Notification           Notification[]
   Cart                   Cart[]
@@ -125,8 +125,8 @@ model User {
   CourseProgress         CourseProgress[]
   payment                Payment[]
   file                   file[]
-  Reaction               Reaction[]
-  ChatParticipant        ChatParticipant[]
+  // Reaction               Reaction[]
+  // ChatParticipant        ChatParticipant[]
   SubscribedToNewsletter SubscribedToNewsletter[]
   Instructor             Instructor[]
   Rating                 InstructorRating[]
@@ -529,59 +529,85 @@ model Reply {
   deletedAt DateTime?
 }
 
+// model Chat {
+//   id               String            @id @default(auto()) @map("_id") @db.ObjectId
+//   createdAt        DateTime          @default(now())
+//   updatedAt        DateTime          @updatedAt
+//   participants     ChatParticipant[]
+//   Message          Message[]
+//   isGroupChat      Boolean           @default(false)
+//   groupName        String?
+//   groupDescription String?
+//   groupAvatarUrl   String?
+//   groupAdmin       User?             @relation(fields: [groupAdminId], references: [id])
+//   groupAdminId     String?           @db.ObjectId
+// }
+
 model Chat {
-  id               String            @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  participants     ChatParticipant[]
-  Message          Message[]
-  isGroupChat      Boolean           @default(false)
-  groupName        String?
-  groupDescription String?
-  groupAvatarUrl   String?
-  groupAdmin       User?             @relation(fields: [groupAdminId], references: [id])
-  groupAdminId     String?           @db.ObjectId
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  message    String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  senderId   String   @db.ObjectId
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiverId String   @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
-model ChatParticipant {
-  id       String    @id @default(auto()) @map("_id") @db.ObjectId
-  chatId   String    @db.ObjectId
-  chat     Chat      @relation(fields: [chatId], references: [id])
-  userId   String    @db.ObjectId
-  user     User      @relation(fields: [userId], references: [id])
-  role     String? //Admin, Member, etc.
-  joinedAt DateTime  @default(now())
-  leftAt   DateTime? //Make this nullable
 
-  @@unique([chatId, userId]) // Ensure a user can only be in a chat once
+model Room {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  roomId       String   
+  participants String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?  
+
 }
 
-model Message {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  senderId  String?    @db.ObjectId
-  sender    User?      @relation(fields: [senderId], references: [id])
-  chatId    String     @db.ObjectId
-  chat      Chat       @relation(fields: [chatId], references: [id])
-  message   String?
-  fileUrl   String?
-  status    String? // Delivered, Read
-  isSeenBy  String[]   @db.ObjectId
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  reactions Reaction[]
-  pinned    Boolean    @default(false)
-}
 
-model Reaction {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
-  message      Message      @relation(fields: [messageId], references: [id])
-  messageId    String       @db.ObjectId
-  userId       String       @db.ObjectId
-  user         User         @relation(fields: [userId], references: [id])
-  reactionType ReactionType
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-}
+
+// model ChatParticipant {
+//   id       String    @id @default(auto()) @map("_id") @db.ObjectId
+//   chatId   String    @db.ObjectId
+//   chat     Chat      @relation(fields: [chatId], references: [id])
+//   userId   String    @db.ObjectId
+//   user     User      @relation(fields: [userId], references: [id])
+//   role     String? //Admin, Member, etc.
+//   joinedAt DateTime  @default(now())
+//   leftAt   DateTime? //Make this nullable
+
+//   @@unique([chatId, userId]) // Ensure a user can only be in a chat once
+// }
+
+
+// model Message {
+//   id        String     @id @default(auto()) @map("_id") @db.ObjectId
+//   senderId  String?    @db.ObjectId
+//   receiverId  String? 
+//   sender    User?      @relation(fields: [senderId], references: [id])
+//   chatId    String     @db.ObjectId
+//   chat      Chat       @relation(fields: [chatId], references: [id])
+//   message   String?
+//   fileUrl   String?
+//   status    String? // Delivered, Read
+//   isSeenBy  String[]   @db.ObjectId
+//   createdAt DateTime   @default(now())
+//   updatedAt DateTime   @updatedAt
+//   reactions Reaction[]
+//   pinned    Boolean    @default(false)
+// }
+
+// model Reaction {
+//   id           String       @id @default(auto()) @map("_id") @db.ObjectId
+//   message      Message      @relation(fields: [messageId], references: [id])
+//   messageId    String       @db.ObjectId
+//   userId       String       @db.ObjectId
+//   user         User         @relation(fields: [userId], references: [id])
+//   reactionType ReactionType
+//   createdAt    DateTime     @default(now())
+//   updatedAt    DateTime     @updatedAt
+// }
 
 model PaymentCard {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId

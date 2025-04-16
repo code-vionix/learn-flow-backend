@@ -25,6 +25,7 @@ import moduleRouter from "./moduleRoute.js";
 
 import commentRouter from "./commentRouter.js"
 import replyCommentRouter from "./replyCommentRouter.js"
+import roomRouter from "./roomRouter.js";
 
 
 const router = express.Router();
@@ -56,6 +57,7 @@ router.use("/lesson", lessonRoute);
 
 router.use("/comments", commentRouter)
 router.use("/reply-comment", replyCommentRouter)
+router.use("/room", roomRouter)
 
 
 
