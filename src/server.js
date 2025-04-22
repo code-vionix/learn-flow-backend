@@ -7,8 +7,6 @@ import morgan from "morgan"
 import { config } from "./config/index.js"
 import routes from "./routes/index.js"
 import { errorHandler } from "./middleware/errorHandler.js"
-import { prisma } from "./models/index.js"
-import { getMessagesByChat, saveMessage } from "./services/chatService.js"
 import socketInit from "../socket/index.js"
 // Initialize express app
 const app = express();
