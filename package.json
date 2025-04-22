@@ -21,6 +21,8 @@
     "morgan": "latest",
     "prisma": "latest",
     "socket.io": "^4.8.1",
+    "stripe": "^18.0.0",
+
     "zod": "^3.24.1"
   },
   "devDependencies": {

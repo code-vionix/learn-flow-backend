@@ -20,13 +20,19 @@ import questionRouter from "./questionRouter.js";
 import lessonRouter from "./lessonRoute.js";
  
 
-import moduleRouter from "./moduleRoute.js";
+// import moduleRouter from "./moduleRoute.js";
 
 
 import commentRouter from "./commentRouter.js"
 import replyCommentRouter from "./replyCommentRouter.js"
+
 import roomRouter from "./roomRouter.js";
 import messageRouter from "./chatRoute.js";
+
+import moduleRouter from "./moduleRoute.js";
+import cardRouter from "./paymentCardRoute.js";
+import enrollRoute from "./paymentEnrollRouter.js";
+
 
 
 const router = express.Router();
@@ -60,6 +66,9 @@ router.use("/comments", commentRouter)
 router.use("/reply-comment", replyCommentRouter)
 router.use("/room", roomRouter)
 router.use("/message", messageRouter)
+
+router.use("/payment", cardRouter);
+router.use("/course", enrollRoute)
 
 
 
