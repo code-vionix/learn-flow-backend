@@ -1,3 +1,4 @@
+import cloudinary from "../lib/uploadToCloudinary.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { prisma } from "../models/index.js";
 
@@ -6,18 +7,36 @@ import { prisma } from "../models/index.js";
 // @access  Private
 export const createLesson = async (req, res, next) => {
   try {
-    const { title, content, videoUrl, moduleId } = req.body;
+    const { title, content, moduleId } = req.body;
     const userId = req.user?.id || "67debbfbd62e2129820291dc"; // Fallback user ID for testing
+    const videoFile = req.file;
 
     if (!userId) return next(new AppError("Unauthorized request", 401));
     if (!title || !moduleId)
       return next(new AppError("Title and moduleId are required", 400));
 
+    let videourl = null;
+    if (videoFile) {
+      try {
+        const uploadResponse = await cloudinary.uploader.upload(
+          videoFile.path,
+          {
+            resource_type: "video",
+            folder: "course_lessons",
+            upload_preset: "lesson_videos",
+          }
+        );
+        videourl = uploadResponse.secure_url;
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        return next(new AppError("Failed to upload video", 500));
+      }
+    }
     const newLesson = await prisma.lesson.create({
       data: {
         title,
         content,
-        videoUrl,
+        videoUrl: videourl || null,
         moduleId,
         deletedAt: null, // Ensure deletedAt is explicitly set to null
       },
