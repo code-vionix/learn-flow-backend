@@ -168,9 +168,52 @@ export const getUserEnrollments = async (req, res) => {
   try {
     const enrollments = await prisma.enrollment.findMany({
       where: { userId },
+      include:{
+        course:{
+          select:{
+            title: true,
+            thumbnail: true,
+            language: true,
+            description:true,
+            subtitle:true,
+            createdAt:true,
+            teacher:{
+              select:{
+                firstName:true,
+                lastName:true,
+              }
+            },
+            
+          }
+        }
+      }
     });
+    const enrichedEnrollments = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const courseId = enrollment.course.id;
 
-    res.status(200).json(enrollments);
+        const ratting = await prisma.reviews.aggregate({
+          where:{courseId},
+          _avg: {rating: true}
+        })
+
+        // Count total enrolled students
+        const totalEnrolled = await prisma.enrollment.count({
+          where: { courseId },
+        });
+        return {
+          ...enrollment,
+          course: {
+            ...enrollment.course,
+            averageRating: parseFloat((ratting._avg.rating || 0).toFixed(1)),
+            totalEnrolled,
+          },
+        };
+      })
+    )
+    
+
+    res.status(200).json(enrichedEnrollments);
   } catch (err) {
     console.error("Error fetching user's enrollments:", err);
     res.status(500).json({ error: "Internal server error" });
