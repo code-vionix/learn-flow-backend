@@ -17,7 +17,7 @@ import instructorRatings from "./instructorRating.js";
 
 import assignmentRouter from "./assignmentRouter.js";
 import moduleRouter from "./moduleRoute.js";
-
+import uploadRoutes from "./upload.route.js"; // ✅ Add this if you support uploads
 const router = express.Router();
 
 // API routes
@@ -37,6 +37,8 @@ router.use("/module", moduleRouter);
 router.use("/assignment", assignmentRouter);
 
 router.use("/lesson", lessonRoute);
+
+router.use("/upload", uploadRoutes); // ✅ Cloudinary uploads, optional
 
 // Handle 404 for API routes
 router.use(notFound);

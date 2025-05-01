@@ -11,6 +11,7 @@
   "dependencies": {
     "@prisma/client": "^6.5.0",
     "bcryptjs": "latest",
+    "cloudinary": "^2.6.0",
     "cors": "latest",
     "date-fns": "4.1.0",
     "dotenv": "latest",
@@ -19,6 +20,7 @@
     "jsonwebtoken": "latest",
     "mongodb": "^6.15.0",
     "morgan": "latest",
+    "multer": "^1.4.5-lts.2",
     "prisma": "latest",
     "zod": "^3.24.1"
   },
