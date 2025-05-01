@@ -76,16 +76,62 @@ export const createCourse = async (req, res, next) => {
 };
 
 //Get all course
-export const getAllCourse = async (_req, res, next) => {
+export const getAllCourse = async (req, res, next) => {
   try {
-    // Create course
+    const query = req.query;
+    const hasFilters = Object.keys(query).length > 0;
+
+    const whereClause = {
+      deletedAt: null,
+    };
+
+    if (hasFilters) {
+      // Dynamic filter handling
+
+      if (query.minPrice || query.maxPrice) {
+        whereClause.price = {};
+        if (query.minPrice) whereClause.price.gte = parseFloat(query.minPrice);
+        if (query.maxPrice) whereClause.price.lte = parseFloat(query.maxPrice);
+      }
+
+      if (query.category) {
+        const categories = query.category.split(",");
+        whereClause.category = { in: categories };
+      }
+
+      if (query.Tools) {
+        const tools = query.Tools.split(",");
+        whereClause.tools = { hasSome: tools };
+      }
+
+      if (query.Rating) {
+        whereClause.rating = { gte: parseFloat(query.Rating) };
+      }
+
+      if (query.CourseLevel) {
+        whereClause.level = query.CourseLevel;
+      }
+
+      if (query.free === "true" && query.paid !== "true") {
+        whereClause.price = 0;
+      } else if (query.paid === "true" && query.free !== "true") {
+        whereClause.price = { gt: 0 };
+      }
+
+      if (query.Duration && query.Duration.includes("-")) {
+        const [min, max] = query.Duration.split("-").map(Number);
+        whereClause.duration = { gte: min, lte: max };
+      }
+    }
+
     const courses = await prisma.course.findMany({
-      where: { deletedAt: null },
+      where: whereClause,
     });
 
     return res.status(200).json(courses);
   } catch (error) {
-    return next(new AppError("something went wrong", 500));
+    console.error(error);
+    return next(new AppError("Something went wrong", 500));
   }
 };
 
