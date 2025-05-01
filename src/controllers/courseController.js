@@ -79,54 +79,98 @@ export const createCourse = async (req, res, next) => {
 export const getAllCourse = async (req, res, next) => {
   try {
     const query = req.query;
-    const hasFilters = Object.keys(query).length > 0;
-
     const whereClause = {
       deletedAt: null,
     };
 
-    if (hasFilters) {
-      // Dynamic filter handling
-
-      if (query.minPrice || query.maxPrice) {
-        whereClause.price = {};
-        if (query.minPrice) whereClause.price.gte = parseFloat(query.minPrice);
-        if (query.maxPrice) whereClause.price.lte = parseFloat(query.maxPrice);
+    // Price range (only apply if not using free/paid filters)
+    if (query.free !== "true" && query.paid !== "true") {
+      if (query.minPrice && query.maxPrice) {
+        whereClause.price = {
+          gte: parseFloat(query.minPrice),
+          lte: parseFloat(query.maxPrice),
+        };
+      } else if (query.minPrice) {
+        whereClause.price = { gte: parseFloat(query.minPrice) };
+      } else if (query.maxPrice) {
+        whereClause.price = { lte: parseFloat(query.maxPrice) };
       }
+    }
 
-      if (query.category) {
-        const categories = query.category.split(",");
-        whereClause.category = { in: categories };
-      }
+    // Free/Paid logic (overrides min/maxPrice if present)
+    if (query.free === "true" && query.paid !== "true") {
+      whereClause.price = 0;
+    } else if (query.paid === "true" && query.free !== "true") {
+      whereClause.price = { gt: 0 };
+    }
 
-      if (query.Tools) {
-        const tools = query.Tools.split(",");
-        whereClause.tools = { hasSome: tools };
-      }
+    // Category filter
+    if (query.category) {
+      const categories = query.category.split(",");
+      whereClause.category = { in: categories };
+    }
 
-      if (query.Rating) {
-        whereClause.rating = { gte: parseFloat(query.Rating) };
-      }
+    // SubCategory filter
+    if (query.subCategory) {
+      const subCategories = query.subCategory.split(",");
+      whereClause.subCategory = { in: subCategories };
+    }
 
-      if (query.CourseLevel) {
-        whereClause.level = query.CourseLevel;
-      }
+    // Tools filter
+    if (query.tools || query.Tools) {
+      const tools = (query.tools || query.Tools).split(",");
+      whereClause.tools = { hasSome: tools };
+    }
 
-      if (query.free === "true" && query.paid !== "true") {
-        whereClause.price = 0;
-      } else if (query.paid === "true" && query.free !== "true") {
-        whereClause.price = { gt: 0 };
-      }
+    // Rating filter
+    if (query.rating || query.Rating) {
+      whereClause.rating = { gte: parseFloat(query.rating || query.Rating) };
+    }
 
-      if (query.Duration && query.Duration.includes("-")) {
-        const [min, max] = query.Duration.split("-").map(Number);
-        whereClause.duration = { gte: min, lte: max };
-      }
+    // Course level
+    if (query.level || query.CourseLevel) {
+      whereClause.level = query.level || query.CourseLevel;
+    }
+
+    // Language filter
+    if (query.language) {
+      whereClause.language = query.language;
+    }
+
+    // Tags filter
+    if (query.tags) {
+      const tags = query.tags.split(",");
+      whereClause.tags = { hasSome: tags };
+    }
+
+    // Duration range
+    if (query.Duration && query.Duration.includes("-")) {
+      const [min, max] = query.Duration.split("-").map(Number);
+      whereClause.duration = { gte: min, lte: max };
+    }
+
+    // Instructor filter
+    if (query.instructorId) {
+      whereClause.instructorId = query.instructorId;
+    }
+
+    // Status filter
+    if (query.status) {
+      whereClause.status = query.status;
+    }
+
+    // Visibility filter
+    if (query.visibility) {
+      whereClause.visibility = query.visibility;
     }
 
     const courses = await prisma.course.findMany({
       where: whereClause,
     });
+
+    if (courses.length === 0) {
+      return res.status(404).json({ message: "No courses found." });
+    }
 
     return res.status(200).json(courses);
   } catch (error) {

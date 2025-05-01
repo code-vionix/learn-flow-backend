@@ -71,7 +71,7 @@ enum ReactionType {
 model User {
   id                     String    @id @default(auto()) @map("_id") @db.ObjectId
   email                  String    @unique
-  password               String
+  password               String?
   firstName              String
   lastName               String?
   role                   Role      @default(STUDENT)
