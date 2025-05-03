@@ -36,7 +36,7 @@ export const courseProgress = async (req, res) => {
       where: { courseId },
     });
 
-    // Step 3: Get completed modules by user in the course
+    //  Get completed modules by user in the course
     const completedModules = await prisma.courseProgress.count({
       where: {
         userId,
