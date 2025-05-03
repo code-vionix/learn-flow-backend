@@ -29,10 +29,11 @@ import replyCommentRouter from "./replyCommentRouter.js"
 import roomRouter from "./roomRouter.js";
 
 import moduleRouter from "./moduleRoute.js";
+
+import uploadRoutes from "./upload.route.js"; // ✅ Add this if you support uploads
+
 import cardRouter from "./paymentCardRoute.js";
 import enrollRoute from "./paymentEnrollRouter.js";
-
-
 
 const router = express.Router();
 
@@ -61,13 +62,15 @@ router.use("/question", questionRouter);
 
 router.use("/lesson", lessonRoute);
 
+
+router.use("/upload", uploadRoutes); // ✅ Cloudinary uploads, optional
+
 router.use("/comments", commentRouter)
 router.use("/reply-comment", replyCommentRouter)
 router.use("/room", roomRouter)
 
 router.use("/payment", cardRouter);
 router.use("/course", enrollRoute)
-
 
 
 // Handle 404 for API routes

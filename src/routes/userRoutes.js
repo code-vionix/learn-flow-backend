@@ -6,6 +6,7 @@ import {
   getUserProfile,
   getUsers,
   loginUser,
+  oauthLoginUser,
   regenerateAccessToken,
   registerUser,
   updateUser,
@@ -17,6 +18,7 @@ const router = express.Router();
 // Public routes
 router.post("/register", registerUser); //api/v1/users/register
 router.post("/login", loginUser); //api/v1/users/login
+router.post("/oauth-login", oauthLoginUser); // api/v1/users/oauth-login
 
 // Protected routes
 router.use(protect);
