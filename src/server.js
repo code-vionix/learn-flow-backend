@@ -1,43 +1,44 @@
 import express from "express"
+import http from "http"
+import { Server } from "socket.io"
 import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
 import { config } from "./config/index.js"
 import routes from "./routes/index.js"
 import { errorHandler } from "./middleware/errorHandler.js"
-
+import { prisma } from "./models/index.js"
+import { getMessagesByChat, saveMessage } from "./services/chatService.js"
+import socketInit from "../socket/index.js"
 // Initialize express app
-const app = express()
+const app = express();
+
+const server = http.createServer(app) // Create HTTP server for Socket.IO
 
 // Middleware
-app.use(helmet()) // Security headers
-app.use(cors()) // Enable CORS
-app.use(morgan("dev")) // Request logging
-app.use(express.json()) // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })) // Parse URL-encoded bodies
+app.use(helmet())
+app.use(cors())
+app.use(morgan("dev"))
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
-// API Routes
+
+// Routes
 app.use("/api/v1", routes)
 
-// Docs endpoint
 app.get('/docs', (req, res) => {
   res.redirect('https://documenter.getpostman.com/view/26564987/2sAYk7T4Q5');
-});
+})
 
-
-// Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" })
 })
 
-// Error handling middleware
 app.use(errorHandler)
 
 // Start server
 const PORT = config.port || 3000
-app.listen(PORT, () => {
+server.listen(PORT, () => {
+    socketInit(server);
   console.log(`Server running on port ${PORT}`)
 })
-
-export default app
-
