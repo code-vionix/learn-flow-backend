@@ -14,6 +14,8 @@ export const createCourse = async (req, res, next) => {
     subtitleLanguages,
     level,
     duration,
+    durationUnit,
+    tools,
   } = req.body;
 
   try {
@@ -28,23 +30,29 @@ export const createCourse = async (req, res, next) => {
       !language ||
       !subtitleLanguages ||
       !level ||
-      !duration
+      !duration ||
+      !durationUnit
     ) {
       return next(new AppError("All fields are required", 400));
     }
 
-    //  level is one of the allowed
+    // Validate level is one of the allowed
     const validLevels = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
     if (!validLevels.includes(level)) {
       return next(new AppError("Invalid level value", 400));
     }
 
-    //  subtitleLanguages is an array
+    // subtitleLanguages must be an array
     if (!Array.isArray(subtitleLanguages)) {
       return next(new AppError("subtitleLanguages must be an array", 400));
     }
 
-    // Create the course and include category and subcategory
+    // tools can be optional, but if present, must be array
+    if (tools && !Array.isArray(tools)) {
+      return next(new AppError("tools must be an array if provided", 400));
+    }
+
+    // Create the course and include category and subcategory relations
     const course = await prisma.course.create({
       data: {
         teacherId,
@@ -57,6 +65,8 @@ export const createCourse = async (req, res, next) => {
         subtitleLanguages,
         level,
         duration,
+        durationUnit,
+        tools,
         deletedAt: null,
       },
       include: {
@@ -74,6 +84,7 @@ export const createCourse = async (req, res, next) => {
     return next(new AppError(error.message || "Something went wrong", 500));
   }
 };
+
 
 //Get all course
 export const getAllCourse = async (_req, res, next) => {
