@@ -28,7 +28,7 @@ router.post("/access-token", regenerateAccessToken); //api/v1/users/access-token
 router.get("/profile", getUserProfile); //api/v1/users/profile
 
 // Admin only routes
-router.use(restrictTo("admin"));
+router.use(restrictTo("ADMIN"));
 
 router.route("/").get(getUsers).post(createUser); //api/v1/users
 

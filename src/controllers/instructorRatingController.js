@@ -41,11 +41,18 @@ export const createInstructorRating = async (req, res, next) => {
 export const getInstructorRatings = async (req, res, next) => {
   try {
     const { instructorId } = req.params;
-
+  
     const ratings = await prisma.instructorRating.findMany({
       where: {
         instructorId,
         deletedAt: null, // Fetch only active ratings
+      },
+      include: {
+        user: true,
+        instructor: true,
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
