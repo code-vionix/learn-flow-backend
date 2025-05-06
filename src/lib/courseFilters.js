@@ -15,50 +15,37 @@ export const buildCourseFilter = (query) => {
   if (isFree && !isPaid) {
     whereClause.price = 0;
   } else if (isPaid && !isFree) {
-    whereClause.price = {};
-    if (!isNaN(minPrice)) whereClause.price.gte = minPrice;
-    if (!isNaN(maxPrice)) whereClause.price.lte = maxPrice;
-    if (Object.keys(whereClause.price).length === 0) {
-      delete whereClause.price; // remove empty filter
+    if (!minPrice && !maxPrice) {
+      whereClause.price = { gt: 0 };
+    } else {
+      whereClause.price = {};
+      if (!isNaN(minPrice)) whereClause.price.gte = minPrice;
+      if (!isNaN(maxPrice)) whereClause.price.lte = maxPrice;
     }
   }
 
-  // ----------- Category Filter by Name -----------
+  // ----------- Category -----------
   if (query.category) {
     const categories = query.category
       .split(",")
       .map((c) => decodeURIComponent(c.trim()));
-    if (categories.length) {
-      whereClause.category = {
-        is: {
-          name: { in: categories },
-        },
-      };
-    }
+    if (categories.length) whereClause.category = { in: categories };
   }
 
-  // ----------- SubCategory Filter by Name -----------
+  // ----------- SubCategory -----------
   if (query.subcategory || query.subCategory) {
     const subs = (query.subcategory || query.subCategory)
       .split(",")
       .map((s) => decodeURIComponent(s.trim()));
-    if (subs.length) {
-      whereClause.subCategory = {
-        is: {
-          name: { in: subs },
-        },
-      };
-    }
+    if (subs.length) whereClause.subCategory = { in: subs };
   }
 
-  // ----------- Tools (Tags) -----------
+  // ----------- Tools -----------
   if (query.tools || query.Tools) {
     const tools = (query.tools || query.Tools)
       .split(",")
       .map((t) => decodeURIComponent(t.trim()));
-    if (tools.length) {
-      whereClause.tags = { hasSome: tools };
-    }
+    if (tools.length) whereClause.tags = { hasSome: tools };
   }
 
   // ----------- Level -----------
@@ -66,9 +53,7 @@ export const buildCourseFilter = (query) => {
     const levels = (query.level || query.CourseLevel)
       .split(",")
       .map((l) => decodeURIComponent(l.trim()));
-    if (levels.length) {
-      whereClause.level = { in: levels };
-    }
+    if (levels.length) whereClause.level = { in: levels };
   }
 
   // ----------- Duration -----------
@@ -76,9 +61,13 @@ export const buildCourseFilter = (query) => {
     const durations = query.Duration.split(",").map((d) =>
       decodeURIComponent(d.trim())
     );
-    if (durations.length) {
-      whereClause.duration = { in: durations };
-    }
+    if (durations.length) whereClause.duration = { in: durations };
+  }
+
+  // ----------- Search by Title -----------
+  if (query.query) {
+    const search = decodeURIComponent(query.query.trim());
+    whereClause.title = { contains: search, mode: "insensitive" };
   }
 
   return whereClause;

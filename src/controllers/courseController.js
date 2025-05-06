@@ -80,7 +80,19 @@ export const createCourse = async (req, res, next) => {
 
 export const getAllCourse = async (req, res, next) => {
   try {
-    const whereClause = buildCourseFilter(req.query);
+    const searchQuery = req.query.query;
+    let whereClause = {};
+
+    if (searchQuery) {
+      // Only search by title if query exists
+      whereClause.title = {
+        contains: searchQuery,
+        mode: "insensitive",
+      };
+    } else {
+      // Apply full filters if there's no search query
+      whereClause = buildCourseFilter(req.query);
+    }
 
     // Parse ratings from query
     const ratingQuery = req.query.rating || req.query.Rating;
@@ -91,13 +103,13 @@ export const getAllCourse = async (req, res, next) => {
           .filter((r) => !isNaN(r))
       : [];
 
-    // Fetch all courses matching filters
+    // Fetch courses from DB
     const courses = await prisma.course.findMany({
       where: whereClause,
       include: {
         category: {
           include: {
-            SubCategory: true, // Include all subcategories within the category
+            SubCategory: true,
           },
         },
         subCategory: {
@@ -118,7 +130,7 @@ export const getAllCourse = async (req, res, next) => {
       return res.status(404).json({ message: "No courses found." });
     }
 
-    // Filter by individual review ratings
+    // Filter by ratings if any
     const filteredCourses =
       filterRatings.length === 0
         ? courses
@@ -128,13 +140,13 @@ export const getAllCourse = async (req, res, next) => {
             )
           );
 
-    // Format course output
+    // Format final response
     const formattedCourses = filteredCourses.map((course) => {
       const { categoryId, subCategoryId, ...rest } = course;
       return {
         ...rest,
         subCategory: course.subCategory?.name || null,
-        category: course.category || null, // full category object including its subcategories
+        category: course.category || null,
         reviews: course.reviews || [],
       };
     });
