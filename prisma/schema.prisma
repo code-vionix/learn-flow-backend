@@ -71,7 +71,7 @@ enum ReactionType {
 model User {
   id                     String    @id @default(auto()) @map("_id") @db.ObjectId
   email                  String    @unique
-  password               String
+  password               String?
   firstName              String
   lastName               String?
   role                   Role      @default(STUDENT)
@@ -204,8 +204,8 @@ model Course {
   endDate            DateTime?
   imageUrl           String?
   deletedAt          DateTime?
-  teacher            User         @relation("TeacherCourses", fields: [teacherId], references: [id])
   teacherId          String       @db.ObjectId
+  teacher            User         @relation("TeacherCourses", fields: [teacherId], references: [id])
   status             CourseStatus @default(DRAFT)
   visibility         String       @default("PUBLIC") // PUBLIC, PRIVATE, UNLISTED
   instructorId       String?      @db.ObjectId
@@ -231,6 +231,7 @@ model Course {
   congratulationsMessage String?
   certificateTemplateUrl String?
   payment                Payment[]
+  
 
   @@map("courses")
 }
@@ -275,6 +276,7 @@ model Module {
   updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?
   order       Int? //Order of the modules
+  progress    CourseProgress[]
   Assignments Assignment[]
 
   @@map("modules")
@@ -359,14 +361,16 @@ model CourseProgress {
   id                  String   @id @default(auto()) @map("_id") @db.ObjectId
   courseId            String   @db.ObjectId
   course              Course   @relation(fields: [courseId], references: [id])
+  moduleId            String   @db.ObjectId
+  module              Module   @relation(fields: [moduleId], references: [id])
   userId              String   @db.ObjectId
   user                User     @relation(fields: [userId], references: [id])
   completed           Boolean
-  quizCompleted       Int
-  quizTotal           Int
-  assignmentCompleted Int
-  assignmentTotal     Int
-  progress            Int
+  quizCompleted       Int?
+  quizTotal           Int?
+  assignmentCompleted Int?
+  assignmentTotal     Int?
+  progress            Int?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }

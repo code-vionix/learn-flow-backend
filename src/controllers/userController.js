@@ -102,6 +102,58 @@ export const registerUser = async (req, res, next) => {
   }
 };
 
+export const oauthLoginUser = async (req, res) => {
+  console.log("🔥 oauthLoginUser hit");
+  console.log("📨 Request Body:", req.body);
+  const { email, name, image } = req.body;
+
+  try {
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      const [firstName, ...rest] = name?.split(" ") || [];
+      const lastName = rest.join(" ") || "";
+
+      user = await prisma.user.create({
+        data: {
+          email,
+          firstName: firstName || "Google",
+          lastName: lastName || "User",
+          imageUrl: image,
+          emailVerified: true,
+          role: "STUDENT",
+        },
+      });
+    }
+
+    // ✅ Generate access token (valid for 1 hour)
+    const accessToken = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // ✅ Optional: Generate refresh token (valid for 7 days)
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "OAuth login failed",
+      error: error.message,
+    });
+  }
+};
 // @desc    Auth user & get token
 // @route   POST /api/v1/users/login
 // @access  Public
