@@ -209,13 +209,10 @@ export const createUser = async (req, res, next) => {
   }
 };
 
-// @desc    Update a user
-// @route   PUT /api/v1/users/:id
-// @access  Private/Admin
 export const updateUser = async (req, res, next) => {
-  const id = req.params.id;
-  const { userId, currentPassword, newPassword } = req.body;
+  const { currentPassword, newPassword } = req.body;
 
+const userId = req.user.id;
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },

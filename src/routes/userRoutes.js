@@ -33,5 +33,6 @@ router.use(restrictTo("ADMIN"));
 router.route("/").get(getUsers).post(createUser); //api/v1/users
 
 router.route("/:id").get(getUserById).put(updateUser).delete(deleteUser); //api/v1/users/:id
+router.route("/change-password").put(updateUser); //api/v1/users/:id
 
 export default router;
