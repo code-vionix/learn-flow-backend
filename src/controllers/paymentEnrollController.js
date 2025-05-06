@@ -210,6 +210,9 @@ export const getUserEnrollments = async (req, res) => {
         }
       };
     });
+    // const enrichedEnrollments = await Promise.all(
+    //   enrollments.map(async (enrollment) => {
+    //     const courseId = enrollment.course.id;
 
     res.status(200).json(formatted);
   } catch (err) {

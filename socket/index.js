@@ -16,8 +16,10 @@ const onlineUsers = new Map();
 // }
 
 const addUser = (user, socketId) => {
+
   console.log("socket user", user);
   onlineUsers.set(user._id, { ...user, socketId });
+
 };
 
 // const removeUser = (socketId) => {
@@ -36,63 +38,67 @@ const removeUser = (socketId) => {
 };
 
 const socketInit = (server) => {
-  const io = new Server(server, {
-    cors: {
-      origin: "http://localhost:5173",
-      methods: ["GET", "POST"],
-    },
-  });
 
-  io.on("connection", (socket) => {
-    socket.on("ADD_USER", (user) => {
-      addUser(user, socket.id);
-      // io.emit('USERS_ADDED', onlineUsers);
-      io.emit("USERS_ADDED", Array.from(onlineUsers.values()));
+    // console.log("test socket", server);
+    const io = new Server(server, {
+        cors: {
+            origin: 'http://localhost:5173',
+            methods: ['GET', 'POST'],
+        },
     });
 
-    socket.on("SEND_MESSAGE", async (msg) => {
-      console.log("send message", msg);
-      const saved = await saveMsg(msg);
-      const receiverSocketId = onlineUsers.get(msg.receiver?._id)?.socketId;
-      const senderSocketId = onlineUsers.get(msg.sender?._id)?.socketId;
+    io.on('connection', (socket) => {
+        socket.on('ADD_USER', (user) => {
+            addUser(user, socket.id);
+            // io.emit('USERS_ADDED', onlineUsers);
+           io.emit('USERS_ADDED', Array.from(onlineUsers.values()));
+        });
 
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit("RECEIVE_MESSAGE", saved);
-      }
+        socket.on('SEND_MESSAGE', async(msg) => {
+            // console.log("send message", msg);
+            const saved = await saveMsg(msg);
+              const receiverSocketId = onlineUsers.get(msg.receiver?._id)?.socketId;
+            const senderSocketId = onlineUsers.get(msg.sender?._id)?.socketId;
 
-      if (senderSocketId && receiverSocketId !== senderSocketId) {
-        io.to(senderSocketId).emit("RECEIVE_MESSAGE", saved);
-      }
+   if (receiverSocketId) {
+                io.to(receiverSocketId).emit('RECEIVE_MESSAGE', saved);
+            }
 
-      // io.to(msg.receiver?.socketId)
-      //     .to(msg.sender?.socketId)
-      //     .emit('RECEIVE_MESSAGE', saved);
-    });
+            if (senderSocketId && receiverSocketId !== senderSocketId) {
+                io.to(senderSocketId).emit('RECEIVE_MESSAGE', saved);
+            }
 
-    // socket.on('DELETED_MESSAGE', (msg) => {
-    //     socket.to(msg.receiver?.socketId).emit('DELETED_MESSAGE', msg);
-    // });
+            // io.to(msg.receiver?.socketId)
+            //     .to(msg.sender?.socketId)
+            //     .emit('RECEIVE_MESSAGE', saved);
+        });
 
-    socket.on("DELETED_MESSAGE", (msg) => {
-      const receiverSocketId = onlineUsers.get(msg.receiver?._id)?.socketId;
-      const senderSocketId = socket.id;
+        // socket.on('DELETED_MESSAGE', (msg) => {
+        //     socket.to(msg.receiver?.socketId).emit('DELETED_MESSAGE', msg);
+        // });
 
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit("DELETED_MESSAGE", msg);
-      }
+          socket.on('DELETED_MESSAGE', (msg) => {
+            const receiverSocketId = onlineUsers.get(msg.receiver?._id)?.socketId;
+            const senderSocketId = socket.id;
 
-      if (receiverSocketId !== senderSocketId) {
-        io.to(senderSocketId).emit("DELETED_MESSAGE", msg);
-      }
-    });
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('DELETED_MESSAGE', msg);
+            }
 
-    // socket.on('disconnect', () => {
-    //     removeUser(socket?.id);
-    //      io.emit('USERS_ADDED', onlineUsers);
-    // });
-    socket.on("disconnect", () => {
-      removeUser(socket.id);
-      io.emit("USERS_ADDED", Array.from(onlineUsers.values()));
+            if (receiverSocketId !== senderSocketId) {
+                io.to(senderSocketId).emit('DELETED_MESSAGE', msg);
+            }
+        });
+
+
+        // socket.on('disconnect', () => {
+        //     removeUser(socket?.id);
+        //      io.emit('USERS_ADDED', onlineUsers);
+        // });
+           socket.on('disconnect', () => {
+            removeUser(socket.id);
+            io.emit('USERS_ADDED', Array.from(onlineUsers.values()));
+        });
     });
   });
 };

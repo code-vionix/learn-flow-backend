@@ -96,14 +96,52 @@ export const getNotificationById = async (req, res, next) => {
 // @desc    Update a notification
 // @route   PUT /api/v1/notification/:id
 // @access  Private
+// export const updateNotification = async (req, res, next) => {
+//   try {
+//     const { id } = req.params;
+//     const { message } = req.body;
+//     const userId = req.user?.id;
+
+//     if (!message) return next(new AppError("Message is required", 400));
+
+//     const existingNotification = await prisma.notification.findUnique({
+//       where: { id },
+//     });
+
+//     if (!existingNotification || existingNotification.userId !== userId) {
+//       return next(new AppError("Notification not found", 404));
+//     }
+
+//     const updatedNotification = await prisma.notification.update({
+//       where: { id },
+//       data: { message },
+//     });
+
+//     res.status(200).json(updatedNotification);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+// @desc    Update a notification
+// @route   PUT /api/v1/notification/:id
+// @access  Private
 export const updateNotification = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { message } = req.body;
-    const userId = req.user?.id;
+    const {
+      message,
+      buyCourse,
+      writeReview,
+      commentLecture,
+      downloadNotes,
+      replyComment,
+      visitProfile,
+      downloadFile,
+    } = req.body;
+    const userId = req.user?.id || "67debbfbd62e2129820291dc"; // fallback for testing
 
-    if (!message) return next(new AppError("Message is required", 400));
-
+    // Check if notification exists and belongs to user
     const existingNotification = await prisma.notification.findUnique({
       where: { id },
     });
@@ -114,7 +152,16 @@ export const updateNotification = async (req, res, next) => {
 
     const updatedNotification = await prisma.notification.update({
       where: { id },
-      data: { message },
+      data: {
+        message,
+        buyCourse,
+        writeReview,
+        commentLecture,
+        downloadNotes,
+        replyComment,
+        visitProfile,
+        downloadFile,
+      },
     });
 
     res.status(200).json(updatedNotification);
@@ -122,6 +169,8 @@ export const updateNotification = async (req, res, next) => {
     next(error);
   }
 };
+
+
 
 // @desc    Delete a notification
 // @route   DELETE /api/v1/notification/:id

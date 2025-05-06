@@ -148,6 +148,8 @@ model Instructor {
   id        String             @id @default(auto()) @map("_id") @db.ObjectId
   userId    String             @unique @map("user_id") @db.ObjectId
   user      User               @relation(fields: [userId], references: [id])
+  title     String? // Tuhin
+  phone     String? // Tuhin
   bio       String? // Tuhin
   about     String? // Talha
   website   String? // Talha
@@ -674,13 +676,20 @@ model Revenue {
 }
 
 model Notification {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
-  message   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-   deletedAt              DateTime?
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id])
+  message        String?
+  buyCourse      Boolean  @default(false)
+  writeReview    Boolean  @default(false)
+  commentLecture Boolean  @default(false)
+  downloadNotes  Boolean  @default(false)
+  replyComment   Boolean  @default(false)
+  visitProfile   Boolean  @default(false)
+  downloadFile   Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
 }
 
 model Cupon {
