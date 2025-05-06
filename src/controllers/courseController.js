@@ -1,3 +1,4 @@
+import { buildCourseFilter } from "../lib/courseFilters.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { prisma } from "../models/index.js";
 
@@ -76,106 +77,72 @@ export const createCourse = async (req, res, next) => {
 };
 
 //Get all course
+
 export const getAllCourse = async (req, res, next) => {
   try {
-    const query = req.query;
-    const whereClause = {
-      deletedAt: null,
-    };
+    const whereClause = buildCourseFilter(req.query);
 
-    // Price range (only apply if not using free/paid filters)
-    if (query.free !== "true" && query.paid !== "true") {
-      if (query.minPrice && query.maxPrice) {
-        whereClause.price = {
-          gte: parseFloat(query.minPrice),
-          lte: parseFloat(query.maxPrice),
-        };
-      } else if (query.minPrice) {
-        whereClause.price = { gte: parseFloat(query.minPrice) };
-      } else if (query.maxPrice) {
-        whereClause.price = { lte: parseFloat(query.maxPrice) };
-      }
-    }
+    // Parse ratings from query
+    const ratingQuery = req.query.rating || req.query.Rating;
+    const filterRatings = ratingQuery
+      ? ratingQuery
+          .split(",")
+          .map((r) => parseFloat(r))
+          .filter((r) => !isNaN(r))
+      : [];
 
-    // Free/Paid logic (overrides min/maxPrice if present)
-    if (query.free === "true" && query.paid !== "true") {
-      whereClause.price = 0;
-    } else if (query.paid === "true" && query.free !== "true") {
-      whereClause.price = { gt: 0 };
-    }
-
-    // Category filter
-    if (query.category) {
-      const categories = query.category.split(",");
-      whereClause.category = { in: categories };
-    }
-
-    // SubCategory filter
-    if (query.subCategory) {
-      const subCategories = query.subCategory.split(",");
-      whereClause.subCategory = { in: subCategories };
-    }
-
-    // Tools filter
-    if (query.tools || query.Tools) {
-      const tools = (query.tools || query.Tools).split(",");
-      whereClause.tools = { hasSome: tools };
-    }
-
-    // Rating filter
-    if (query.rating || query.Rating) {
-      whereClause.rating = { gte: parseFloat(query.rating || query.Rating) };
-    }
-
-    // Course level
-    if (query.level || query.CourseLevel) {
-      whereClause.level = query.level || query.CourseLevel;
-    }
-
-    // Language filter
-    if (query.language) {
-      whereClause.language = query.language;
-    }
-
-    // Tags filter
-    if (query.tags) {
-      const tags = query.tags.split(",");
-      whereClause.tags = { hasSome: tags };
-    }
-
-    // Duration range
-    if (query.Duration && query.Duration.includes("-")) {
-      const [min, max] = query.Duration.split("-").map(Number);
-      whereClause.duration = { gte: min, lte: max };
-    }
-
-    // Instructor filter
-    if (query.instructorId) {
-      whereClause.instructorId = query.instructorId;
-    }
-
-    // Status filter
-    if (query.status) {
-      whereClause.status = query.status;
-    }
-
-    // Visibility filter
-    if (query.visibility) {
-      whereClause.visibility = query.visibility;
-    }
-
+    // Fetch all courses matching filters
     const courses = await prisma.course.findMany({
       where: whereClause,
+      include: {
+        category: {
+          include: {
+            SubCategory: true, // Include all subcategories within the category
+          },
+        },
+        subCategory: {
+          select: { name: true },
+        },
+        reviews: {
+          select: {
+            rating: true,
+            comment: true,
+            userId: true,
+            id: true,
+          },
+        },
+      },
     });
 
-    if (courses.length === 0) {
+    if (!courses.length) {
       return res.status(404).json({ message: "No courses found." });
     }
 
-    return res.status(200).json(courses);
+    // Filter by individual review ratings
+    const filteredCourses =
+      filterRatings.length === 0
+        ? courses
+        : courses.filter((course) =>
+            course.reviews.some((review) =>
+              filterRatings.includes(review.rating)
+            )
+          );
+
+    // Format course output
+    const formattedCourses = filteredCourses.map((course) => {
+      const { categoryId, subCategoryId, ...rest } = course;
+      return {
+        ...rest,
+        subCategory: course.subCategory?.name || null,
+        category: course.category || null, // full category object including its subcategories
+        reviews: course.reviews || [],
+      };
+    });
+
+    return res.status(200).json(formattedCourses);
   } catch (error) {
     console.error(error);
-    return next(new AppError("Something went wrong", 500));
+    return next(new AppError("An error occurred while fetching courses.", 500));
   }
 };
 
