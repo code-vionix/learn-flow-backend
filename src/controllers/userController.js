@@ -227,6 +227,7 @@ export const getUsers = async (req, res, next) => {
 // @route   GET /api/v1/users/:id
 // @access  Private/Admin
 export const getUserById = async (req, res, next) => {
+  console.log('.......', req.params.id);
   try {
     const user = await userService.getUserById(req.params.id);
 
@@ -260,22 +261,34 @@ export const createUser = async (req, res, next) => {
   }
 };
 
-// @desc    Update a user
-// @route   PUT /api/v1/users/:id
-// @access  Private/Admin
 export const updateUser = async (req, res, next) => {
-  try {
-    const user = await userService.updateUser(req.params.id, req.body);
+  const { currentPassword, newPassword } = req.body;
 
-    if (user) {
-      res.json(user);
-    } else {
-      return next(new AppError("User not found", 404));
-    }
+const userId = req.user.id;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' });
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
     next(error);
   }
 };
+
 
 // @desc    Delete a user
 // @route   DELETE /api/v1/users/:id

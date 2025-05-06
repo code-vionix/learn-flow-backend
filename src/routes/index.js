@@ -32,23 +32,17 @@ import cardRouter from "./paymentCardRoute.js";
 import enrollRoute from "./paymentEnrollRouter.js";
 import purchesRouter from "./purchesHistoryRouter.js";
 import coursePogressRouter from "./courseProgressRouter.js";
-
-
-import uploadRoutes from "./upload.route.js"; // ✅ Add this if you support uploads
-
-import cardRouter from "./paymentCardRoute.js";
-import enrollRoute from "./paymentEnrollRouter.js";
-
+import uploadRoutes from "./upload.route.js"; 
 
 const router = express.Router();
 
 // API routes
-router.use("/users", userRoutes); //api/v1/users
+router.use("/users", userRoutes);  
 
 router.use("/category", categoryRouter);
 router.use("/sub_category", subCategoryRouter);
 
-router.use("/instructors", instructorRoutes); //api/v1/instructors
+router.use("/instructors", instructorRoutes); 
 router.use("/courses", courseRoutes); //api/v1/instructors
 
 router.use("/instructor-ratings", instructorRatings);

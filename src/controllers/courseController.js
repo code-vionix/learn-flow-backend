@@ -5,30 +5,43 @@ import { prisma } from "../models/index.js";
 export const createCourse = async (req, res, next) => {
   const {
     title,
-    teacherId,
-    subtitle,
-    categoryId,
-    subCategoryId,
-    topic,
-    language,
-    subtitleLanguages,
-    level,
-    duration,
+  teacherId,
+  subtitle,
+  categoryId,
+  subCategoryId,
+  topic,
+  language,
+  subtitleLanguages,
+  level,
+  duration,
+  thumbnail,
+  trailer,
+  price,
+  discountPrice,
+  discountPercentage,
+  startDate,
+  endDate,
+  imageUrl,
+  tags,
+  welcomeMessage,
+  congratulationsMessage,
+  certificateTemplateUrl,
+  instructorId
   } = req.body;
 
   try {
     // Validate required fields
     if (
-      !title ||
-      !teacherId ||
-      !subtitle ||
-      !categoryId ||
-      !subCategoryId ||
-      !topic ||
-      !language ||
-      !subtitleLanguages ||
-      !level ||
-      !duration
+       !title ||
+    !teacherId ||
+    !subtitle ||
+    !categoryId ||
+    !subCategoryId ||
+    !topic ||
+    !language ||
+    !subtitleLanguages ||
+    !level ||
+    !duration
     ) {
       return next(new AppError("All fields are required", 400));
     }
@@ -47,8 +60,8 @@ export const createCourse = async (req, res, next) => {
     // Create the course and include category and subcategory
     const course = await prisma.course.create({
       data: {
-        teacherId,
         title,
+        teacherId,
         subtitle,
         categoryId,
         subCategoryId,
@@ -57,6 +70,19 @@ export const createCourse = async (req, res, next) => {
         subtitleLanguages,
         level,
         duration,
+        thumbnail,
+        trailer,
+        price,
+        discountPrice,
+        discountPercentage,
+        startDate,
+        endDate,
+        imageUrl,
+        tags,
+        welcomeMessage,
+        congratulationsMessage,
+        certificateTemplateUrl,
+        instructorId,
         deletedAt: null,
       },
       include: {
@@ -99,6 +125,17 @@ export const getCourseById = async (req, res, next) => {
 
     const course = await prisma.course.findUnique({
       where: { deletedAt: null, id },
+      include : {
+        category : true,
+        subCategory: true,
+        // teacher: true,
+        instructor: {
+          include: {
+            user: true,
+          },
+        },
+        enrollments: true
+      }
     });
 
     if (!course) {
