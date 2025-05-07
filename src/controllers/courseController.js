@@ -79,6 +79,7 @@ export const createCourse = async (req, res, next) => {
 
 //Get all course
 export const getAllCourse = async (req, res, next) => {
+  console.log(req.query.query);
   try {
     // Build base where clause from query parameters
     let whereClause = buildCourseFilter(req.query);
