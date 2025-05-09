@@ -7,7 +7,6 @@ import { uploadFile } from "../utils/cloudinaryUpload.js";
 export const createCourse = async (req, res, next) => {
   const {
     title,
-    teacherId,
     subtitle,
     categoryId,
     subCategoryId,
@@ -20,12 +19,12 @@ export const createCourse = async (req, res, next) => {
     tools,
   } = req.body;
 
-  console.log(res.body);
+  console.log(req.user);
+  const teacherId = req.user.id;
   try {
     // Validate required fields
     if (
       !title ||
-      !teacherId ||
       !subtitle ||
       !categoryId ||
       !subCategoryId ||
@@ -129,9 +128,9 @@ export const getCourseById = async (req, res, next) => {
 //course update
 export const UpdateCourse = async (req, res, next) => {
   const { id } = req.params;
+  const teacherId = req.user.id;
   const {
     title,
-    teacherId,
     subtitle,
     categoryId,
     subCategoryId,
@@ -180,7 +179,7 @@ export const UpdateCourse = async (req, res, next) => {
     // Prepare update data
     const updateData = {
       title: title || existingCourse.title,
-      teacherId: teacherId || existingCourse.teacherId,
+      teacherId: teacherId,
       subtitle: subtitle || existingCourse.subtitle,
       categoryId: categoryId || existingCourse.categoryId,
       subCategoryId: subCategoryId || existingCourse.subCategoryId,
@@ -252,11 +251,6 @@ export const UpdateCourse = async (req, res, next) => {
     return next(new AppError("Something went wrong while updating the course", 500));
   }
 };
-
-
-
-
-
 
 //Delete course
 export const DeleteCourse = async (req, res, next) => {

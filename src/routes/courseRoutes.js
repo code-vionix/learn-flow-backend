@@ -7,6 +7,7 @@ import {
   getCourseById,
   UpdateCourse,
 } from "../controllers/courseController.js";
+import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ const upload = multer({
 
 
 // Public routes
-router.post("/", createCourse);
+router.post("/", protect, createCourse);
 router.get("/", getAllCourse);
 router.get("/:id", getCourseById);
 router.put(
