@@ -1,7 +1,7 @@
-import { filterByRating } from "../filters/filterByRating.js";
 import { buildCourseFilter } from "../lib/courseFilters.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { prisma } from "../models/index.js";
+import { sortByType } from "../utils/sortByType.js";
 
 // create courese
 export const createCourse = async (req, res, next) => {
@@ -79,35 +79,27 @@ export const createCourse = async (req, res, next) => {
 
 //Get all course
 export const getAllCourse = async (req, res, next) => {
-  console.log(req.query.query);
   try {
-    // Build base where clause from query parameters
-    let whereClause = buildCourseFilter(req.query);
+    const whereClause = buildCourseFilter(req.query);
+    const orderBy = sortByType(req.query);
 
-    // Handle rating filter logic separately
-    const ratingFilter = filterByRating(req.query);
-    if (Object.keys(ratingFilter).length > 0) {
-      whereClause = { ...whereClause, ...ratingFilter }; // Combine with the existing where clause
-    }
-
-    // Query the database with filters
     const courses = await prisma.course.findMany({
       where: whereClause,
+      orderBy,
       include: {
         category: { include: { SubCategory: true } },
         subCategory: { select: { name: true } },
         reviews: {
           select: { rating: true, comment: true, userId: true, id: true },
         },
+        enrollments: true,
       },
     });
 
-    // If no courses are found, return a 404 response
     if (!courses.length) {
       return res.status(404).json({ message: "No courses found." });
     }
 
-    // Format the courses data for the response
     const formattedCourses = courses.map((course) => {
       const { categoryId, subCategoryId, ...rest } = course;
       return {
@@ -118,7 +110,6 @@ export const getAllCourse = async (req, res, next) => {
       };
     });
 
-    // Return the formatted courses in the response
     return res.status(200).json(formattedCourses);
   } catch (error) {
     console.error(error);
@@ -129,24 +120,62 @@ export const getAllCourse = async (req, res, next) => {
 // get course by id
 export const getCourseById = async (req, res, next) => {
   const { id } = req.params;
+
   try {
     if (!id) {
-      return next(new AppError("Course id  requird", 400));
+      return next(new AppError("Course ID is required", 400));
     }
 
+    // Fetch main course data
     const course = await prisma.course.findUnique({
-      where: { deletedAt: null, id },
+      where: {
+        id,
+        deletedAt: null,
+      },
+      include: {
+        instructor: true,
+        category: true,
+        subCategory: true,
+        reviews: {
+          include: {
+            user: true,
+          },
+        },
+        modules: true, // include what actually exists
+        teacher: true,
+        assignments: true,
+        quizzes: true,
+        learnings: true,
+        targetAudiences: true,
+        PreRequirement: true,
+        Revenue: true,
+        Cart: true,
+        Wishlist: true,
+        CourseProgress: true,
+        payment: true,
+      },
     });
 
     if (!course) {
-      return next(new AppError("Course not Found!", 404));
+      return next(new AppError("Course not found!", 404));
     }
 
-    if (course) {
-      res.status(200).json(course);
-    }
+    // Fetch sections manually
+    const modules = await prisma.module.findMany({
+      where: {
+        courseId: id,
+      },
+      include: {
+        lessons: true, // only if Module model has lessons relation
+      },
+    });
+
+    course.modules = modules;
+
+    res.status(200).json(course);
   } catch (error) {
-    return next(new AppError("something went wrong", 500));
+    console.error("Error in getCourseById:", error);
+    return next(new AppError("Something went wrong", 500));
   }
 };
 
