@@ -1,6 +1,9 @@
 import { buildCourseFilter } from "../lib/courseFilters.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { prisma } from "../models/index.js";
+
+import { sortByType } from "../utils/sortByType.js";
+
 import { uploadFile } from "../utils/cloudinaryUpload.js";
 
 
@@ -144,6 +147,10 @@ export const createCourse = async (req, res, next) => {
 
 export const getAllCourse = async (req, res, next) => {
   try {
+
+    const whereClause = buildCourseFilter(req.query);
+    const orderBy = sortByType(req.query);
+
     const searchQuery = req.query.query;
     let whereClause = {};
 
@@ -167,9 +174,20 @@ export const getAllCourse = async (req, res, next) => {
           .filter((r) => !isNaN(r))
       : [];
 
+
     // Fetch courses from DB
     const courses = await prisma.course.findMany({
       where: whereClause,
+
+      orderBy,
+      include: {
+        category: { include: { SubCategory: true } },
+        subCategory: { select: { name: true } },
+        reviews: {
+          select: { rating: true, comment: true, userId: true, id: true },
+        },
+        enrollments: true,
+
       include: {
         category: {
           include: {
@@ -187,12 +205,32 @@ export const getAllCourse = async (req, res, next) => {
             id: true,
           },
         },
+
       },
     });
 
     if (!courses.length) {
       return res.status(404).json({ message: "No courses found." });
     }
+
+
+    const newUpdateCourse = courses.map((course) => {
+      const totalRating =
+        course?.reviews?.reduce(
+          (acc, review) => acc + (review?.rating || 0),
+          0
+        ) || 0;
+      const ratingCount = course?.reviews?.length || 0;
+      const averageRating = ratingCount > 0 ? totalRating / ratingCount : 0;
+
+      return {
+        ...course,
+        rating: averageRating,
+        students: course?.enrollments?.length || 0,
+      };
+    });
+
+    return res.status(200).json(newUpdateCourse);
 
     // Filter by ratings if any
     const filteredCourses =
@@ -216,6 +254,7 @@ export const getAllCourse = async (req, res, next) => {
     });
 
     return res.status(200).json(formattedCourses);
+
   } catch (error) {
     console.error(error);
     return next(new AppError("An error occurred while fetching courses.", 500));
@@ -225,35 +264,76 @@ export const getAllCourse = async (req, res, next) => {
 // get course by id
 export const getCourseById = async (req, res, next) => {
   const { id } = req.params;
+
   try {
     if (!id) {
-      return next(new AppError("Course id  requird", 400));
+      return next(new AppError("Course ID is required", 400));
     }
 
+    // Fetch main course data
     const course = await prisma.course.findUnique({
+
+      where: {
+        id,
+        deletedAt: null,
+      },
+      include: {
+        instructor: true,
+        category: true,
+        subCategory: true,
+        reviews: {
+
       where: { deletedAt: null, id },
       include : {
         category : true,
         subCategory: true,
         // teacher: true,
         instructor: {
+
           include: {
             user: true,
           },
         },
+
+        modules: true, // include what actually exists
+        teacher: true,
+        assignments: true,
+        quizzes: true,
+        learnings: true,
+        targetAudiences: true,
+        PreRequirement: true,
+        Revenue: true,
+        Cart: true,
+        Wishlist: true,
+        CourseProgress: true,
+        payment: true,
+      },
+
         enrollments: true
       }
+
     });
 
     if (!course) {
-      return next(new AppError("Course not Found!", 404));
+      return next(new AppError("Course not found!", 404));
     }
 
-    if (course) {
-      res.status(200).json(course);
-    }
+    // Fetch sections manually
+    const modules = await prisma.module.findMany({
+      where: {
+        courseId: id,
+      },
+      include: {
+        lessons: true, // only if Module model has lessons relation
+      },
+    });
+
+    course.modules = modules;
+
+    res.status(200).json(course);
   } catch (error) {
-    return next(new AppError("something went wrong", 500));
+    console.error("Error in getCourseById:", error);
+    return next(new AppError("Something went wrong", 500));
   }
 };
 
