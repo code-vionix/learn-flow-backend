@@ -100,17 +100,23 @@ export const getAllCourse = async (req, res, next) => {
       return res.status(404).json({ message: "No courses found." });
     }
 
-    const formattedCourses = courses.map((course) => {
-      const { categoryId, subCategoryId, ...rest } = course;
+    const newUpdateCourse = courses.map((course) => {
+      const totalRating =
+        course?.reviews?.reduce(
+          (acc, review) => acc + (review?.rating || 0),
+          0
+        ) || 0;
+      const ratingCount = course?.reviews?.length || 0;
+      const averageRating = ratingCount > 0 ? totalRating / ratingCount : 0;
+
       return {
-        ...rest,
-        subCategory: course.subCategory?.name || null,
-        category: course.category || null,
-        reviews: course.reviews || [],
+        ...course,
+        rating: averageRating,
+        students: course?.enrollments?.length || 0,
       };
     });
 
-    return res.status(200).json(formattedCourses);
+    return res.status(200).json(newUpdateCourse);
   } catch (error) {
     console.error(error);
     return next(new AppError("An error occurred while fetching courses.", 500));
