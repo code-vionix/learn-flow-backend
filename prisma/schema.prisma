@@ -225,6 +225,8 @@ model Course {
   reviews                reviews[]
   Revenue                Revenue[]
   Cart                   Cart[]
+  durationUnit           String
+  tools                  String[]
   Wishlist               Wishlist[]
   CourseProgress         CourseProgress[]
   welcomeMessage         String?
