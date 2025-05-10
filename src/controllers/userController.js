@@ -102,6 +102,58 @@ export const registerUser = async (req, res, next) => {
   }
 };
 
+export const oauthLoginUser = async (req, res) => {
+  console.log("🔥 oauthLoginUser hit");
+  console.log("📨 Request Body:", req.body);
+  const { email, name, image } = req.body;
+
+  try {
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      const [firstName, ...rest] = name?.split(" ") || [];
+      const lastName = rest.join(" ") || "";
+
+      user = await prisma.user.create({
+        data: {
+          email,
+          firstName: firstName || "Google",
+          lastName: lastName || "User",
+          imageUrl: image,
+          emailVerified: true,
+          role: "STUDENT",
+        },
+      });
+    }
+
+    // ✅ Generate access token (valid for 1 hour)
+    const accessToken = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // ✅ Optional: Generate refresh token (valid for 7 days)
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "OAuth login failed",
+      error: error.message,
+    });
+  }
+};
 // @desc    Auth user & get token
 // @route   POST /api/v1/users/login
 // @access  Public
@@ -175,6 +227,7 @@ export const getUsers = async (req, res, next) => {
 // @route   GET /api/v1/users/:id
 // @access  Private/Admin
 export const getUserById = async (req, res, next) => {
+  console.log('.......', req.params.id);
   try {
     const user = await userService.getUserById(req.params.id);
 
@@ -208,22 +261,34 @@ export const createUser = async (req, res, next) => {
   }
 };
 
-// @desc    Update a user
-// @route   PUT /api/v1/users/:id
-// @access  Private/Admin
 export const updateUser = async (req, res, next) => {
-  try {
-    const user = await userService.updateUser(req.params.id, req.body);
+  const { currentPassword, newPassword } = req.body;
 
-    if (user) {
-      res.json(user);
-    } else {
-      return next(new AppError("User not found", 404));
-    }
+const userId = req.user.id;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' });
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
     next(error);
   }
 };
+
 
 // @desc    Delete a user
 // @route   DELETE /api/v1/users/:id

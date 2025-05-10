@@ -148,6 +148,8 @@ model Instructor {
   id        String             @id @default(auto()) @map("_id") @db.ObjectId
   userId    String             @unique @map("user_id") @db.ObjectId
   user      User               @relation(fields: [userId], references: [id])
+  title     String? // Tuhin
+  phone     String? // Tuhin
   bio       String? // Tuhin
   about     String? // Talha
   website   String? // Talha
@@ -202,8 +204,8 @@ model Course {
   endDate            DateTime?
   imageUrl           String?
   deletedAt          DateTime?
-  teacher            User         @relation("TeacherCourses", fields: [teacherId], references: [id])
   teacherId          String       @db.ObjectId
+  teacher            User         @relation("TeacherCourses", fields: [teacherId], references: [id])
   status             CourseStatus @default(DRAFT)
   visibility         String       @default("PUBLIC") // PUBLIC, PRIVATE, UNLISTED
   instructorId       String?      @db.ObjectId
@@ -223,12 +225,15 @@ model Course {
   reviews                reviews[]
   Revenue                Revenue[]
   Cart                   Cart[]
+  durationUnit           String
+  tools                  String[]
   Wishlist               Wishlist[]
   CourseProgress         CourseProgress[]
   welcomeMessage         String?
   congratulationsMessage String?
   certificateTemplateUrl String?
   payment                Payment[]
+  
 
   @@map("courses")
 }
@@ -273,6 +278,7 @@ model Module {
   updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?
   order       Int? //Order of the modules
+  progress    CourseProgress[]
   Assignments Assignment[]
 
   @@map("modules")
@@ -357,14 +363,16 @@ model CourseProgress {
   id                  String   @id @default(auto()) @map("_id") @db.ObjectId
   courseId            String   @db.ObjectId
   course              Course   @relation(fields: [courseId], references: [id])
+  moduleId            String   @db.ObjectId
+  module              Module   @relation(fields: [moduleId], references: [id])
   userId              String   @db.ObjectId
   user                User     @relation(fields: [userId], references: [id])
   completed           Boolean
-  quizCompleted       Int
-  quizTotal           Int
-  assignmentCompleted Int
-  assignmentTotal     Int
-  progress            Int
+  quizCompleted       Int?
+  quizTotal           Int?
+  assignmentCompleted Int?
+  assignmentTotal     Int?
+  progress            Int?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
@@ -670,13 +678,20 @@ model Revenue {
 }
 
 model Notification {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
-  message   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-   deletedAt              DateTime?
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id])
+  message        String?
+  buyCourse      Boolean  @default(false)
+  writeReview    Boolean  @default(false)
+  commentLecture Boolean  @default(false)
+  downloadNotes  Boolean  @default(false)
+  replyComment   Boolean  @default(false)
+  visitProfile   Boolean  @default(false)
+  downloadFile   Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
 }
 
 model Cupon {
