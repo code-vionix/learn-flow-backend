@@ -17,27 +17,62 @@ export const userService = {
     })
   },
 
-  // Get user by ID
+  // Get user by ID service
+  // getUserById: async (id) => {
+  //   return await prisma.user.findUnique({
+  //     where: { id },
+  //     select: {
+  //       id: true,
+  //       firstName: true,
+  //       lastName: true,
+  //       email: true,
+  //       role: true,
+  //       createdAt: true,
+  //       Course: {
+  //         select: {
+  //           id: true,
+  //           title: true,
+  //           createdAt: true,
+  //         },
+  //       },
+  //     },
+  //   })
+  // },
+
   getUserById: async (id) => {
-    return await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        posts: {
-          select: {
-            id: true,
-            title: true,
-            createdAt: true,
-          },
-        },
-      },
-    })
-  },
+  return await prisma.user.findUnique({
+    where: { id },
+    include: {
+      createdCourses: true,
+      enrolledCourses: true,
+      submissions: true,
+      grades: true,
+      Note: true,
+      reviews: true,
+      Comment: true,
+      Reply: true,
+      sentMessages: true,
+      receivedMessages: true,
+      PaymentCard: true,
+      Notification: true,
+      Cart: true,
+      Wishlist: true,
+      SocialProfile: true,
+      userSettings: true,
+      NotificationSettings: true,
+      PlayerSettings: true,
+      IPList: true,
+      lessonProgress: true,
+      CourseProgress: true,
+      payment: true,
+      file: true,
+      SubscribedToNewsletter: true,
+      Instructor: true,
+      Rating: true,
+      NotificationList: true,
+    },
+  });
+},
 
   // Create a new user
   createUser: async (userData) => {

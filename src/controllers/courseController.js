@@ -1,11 +1,16 @@
+import { buildCourseFilter } from "../lib/courseFilters.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { prisma } from "../models/index.js";
+
+import { sortByType } from "../utils/sortByType.js";
+
+import { uploadFile } from "../utils/cloudinaryUpload.js";
+
 
 // create courese
 export const createCourse = async (req, res, next) => {
   const {
     title,
-    teacherId,
     subtitle,
     categoryId,
     subCategoryId,
@@ -14,13 +19,31 @@ export const createCourse = async (req, res, next) => {
     subtitleLanguages,
     level,
     duration,
+    durationUnit,
+    tools,
+  thumbnail,
+  trailer,
+  price,
+  discountPrice,
+  discountPercentage,
+  startDate,
+  endDate,
+  imageUrl,
+  tags,
+  welcomeMessage,
+  congratulationsMessage,
+  certificateTemplateUrl,
+  instructorId
+
   } = req.body;
 
+  console.log(req.user);
+  const teacherId = req.user.id;
   try {
     // Validate required fields
     if (
+
       !title ||
-      !teacherId ||
       !subtitle ||
       !categoryId ||
       !subCategoryId ||
@@ -28,27 +51,44 @@ export const createCourse = async (req, res, next) => {
       !language ||
       !subtitleLanguages ||
       !level ||
-      !duration
+      !duration ||
+      !durationUnit ||
+      !title ||
+    !teacherId ||
+    !subtitle ||
+    !categoryId ||
+    !subCategoryId ||
+    !topic ||
+    !language ||
+    !subtitleLanguages ||
+    !level ||
+    !duration
+
     ) {
       return next(new AppError("All fields are required", 400));
     }
 
-    //  level is one of the allowed
+    // Validate level is one of the allowed
     const validLevels = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
     if (!validLevels.includes(level)) {
       return next(new AppError("Invalid level value", 400));
     }
 
-    //  subtitleLanguages is an array
+    // subtitleLanguages must be an array
     if (!Array.isArray(subtitleLanguages)) {
       return next(new AppError("subtitleLanguages must be an array", 400));
     }
 
-    // Create the course and include category and subcategory
+    // tools can be optional, but if present, must be array
+    if (tools && !Array.isArray(tools)) {
+      return next(new AppError("tools must be an array if provided", 400));
+    }
+
+    // Create the course and include category and subcategory relations
     const course = await prisma.course.create({
       data: {
-        teacherId,
         title,
+        teacherId,
         subtitle,
         categoryId,
         subCategoryId,
@@ -57,6 +97,24 @@ export const createCourse = async (req, res, next) => {
         subtitleLanguages,
         level,
         duration,
+
+        durationUnit,
+        tools,
+
+        thumbnail,
+        trailer,
+        price,
+        discountPrice,
+        discountPercentage,
+        startDate,
+        endDate,
+        imageUrl,
+        tags,
+        welcomeMessage,
+        congratulationsMessage,
+        certificateTemplateUrl,
+        instructorId,
+
         deletedAt: null,
       },
       include: {
@@ -76,62 +134,323 @@ export const createCourse = async (req, res, next) => {
 };
 
 //Get all course
-export const getAllCourse = async (_req, res, next) => {
+
+export const getAllCourse = async (req, res, next) => {
   try {
-    // Create course
+
+    const whereClause = buildCourseFilter(req.query);
+    const orderBy = sortByType(req.query);
+
+    const searchQuery = req.query.query;
+    let whereClause = {};
+
+    if (searchQuery) {
+      // Only search by title if query exists
+      whereClause.title = {
+        contains: searchQuery,
+        mode: "insensitive",
+      };
+    } else {
+      // Apply full filters if there's no search query
+      whereClause = buildCourseFilter(req.query);
+    }
+
+    // Parse ratings from query
+    const ratingQuery = req.query.rating || req.query.Rating;
+    const filterRatings = ratingQuery
+      ? ratingQuery
+          .split(",")
+          .map((r) => parseFloat(r))
+          .filter((r) => !isNaN(r))
+      : [];
+
+
+    // Fetch courses from DB
     const courses = await prisma.course.findMany({
-      where: { deletedAt: null },
+      where: whereClause,
+
+      orderBy,
+      include: {
+        category: { include: { SubCategory: true } },
+        subCategory: { select: { name: true } },
+        reviews: {
+          select: { rating: true, comment: true, userId: true, id: true },
+        },
+        enrollments: true,
+
+      include: {
+        category: {
+          include: {
+            SubCategory: true,
+          },
+        },
+        subCategory: {
+          select: { name: true },
+        },
+        reviews: {
+          select: {
+            rating: true,
+            comment: true,
+            userId: true,
+            id: true,
+          },
+        },
+
+      },
     });
 
-    return res.status(200).json(courses);
+    if (!courses.length) {
+      return res.status(404).json({ message: "No courses found." });
+    }
+
+
+    const newUpdateCourse = courses.map((course) => {
+      const totalRating =
+        course?.reviews?.reduce(
+          (acc, review) => acc + (review?.rating || 0),
+          0
+        ) || 0;
+      const ratingCount = course?.reviews?.length || 0;
+      const averageRating = ratingCount > 0 ? totalRating / ratingCount : 0;
+
+      return {
+        ...course,
+        rating: averageRating,
+        students: course?.enrollments?.length || 0,
+      };
+    });
+
+    return res.status(200).json(newUpdateCourse);
+
+    // Filter by ratings if any
+    const filteredCourses =
+      filterRatings.length === 0
+        ? courses
+        : courses.filter((course) =>
+            course.reviews.some((review) =>
+              filterRatings.includes(review.rating)
+            )
+          );
+
+    // Format final response
+    const formattedCourses = filteredCourses.map((course) => {
+      const { categoryId, subCategoryId, ...rest } = course;
+      return {
+        ...rest,
+        subCategory: course.subCategory?.name || null,
+        category: course.category || null,
+        reviews: course.reviews || [],
+      };
+    });
+
+    return res.status(200).json(formattedCourses);
+
   } catch (error) {
-    return next(new AppError("something went wrong", 500));
+    console.error(error);
+    return next(new AppError("An error occurred while fetching courses.", 500));
   }
 };
 
 // get course by id
 export const getCourseById = async (req, res, next) => {
   const { id } = req.params;
+
   try {
     if (!id) {
-      return next(new AppError("Course id  requird", 400));
+      return next(new AppError("Course ID is required", 400));
     }
 
+    // Fetch main course data
     const course = await prisma.course.findUnique({
+
+      where: {
+        id,
+        deletedAt: null,
+      },
+      include: {
+        instructor: true,
+        category: true,
+        subCategory: true,
+        reviews: {
+
       where: { deletedAt: null, id },
+      include : {
+        category : true,
+        subCategory: true,
+        // teacher: true,
+        instructor: {
+
+          include: {
+            user: true,
+          },
+        },
+
+        modules: true, // include what actually exists
+        teacher: true,
+        assignments: true,
+        quizzes: true,
+        learnings: true,
+        targetAudiences: true,
+        PreRequirement: true,
+        Revenue: true,
+        Cart: true,
+        Wishlist: true,
+        CourseProgress: true,
+        payment: true,
+      },
+
+        enrollments: true
+      }
+
     });
 
     if (!course) {
-      return next(new AppError("Course not Found!", 404));
+      return next(new AppError("Course not found!", 404));
     }
 
-    if (course) {
-      res.status(200).json(course);
-    }
+    // Fetch sections manually
+    const modules = await prisma.module.findMany({
+      where: {
+        courseId: id,
+      },
+      include: {
+        lessons: true, // only if Module model has lessons relation
+      },
+    });
+
+    course.modules = modules;
+
+    res.status(200).json(course);
   } catch (error) {
-    return next(new AppError("something went wrong", 500));
+    console.error("Error in getCourseById:", error);
+    return next(new AppError("Something went wrong", 500));
   }
 };
 
 //course update
 export const UpdateCourse = async (req, res, next) => {
   const { id } = req.params;
-  const courseData = req.body;
+  const teacherId = req.user.id;
+  const {
+    title,
+    subtitle,
+    categoryId,
+    subCategoryId,
+    topic,
+    language,
+    subtitleLanguages,
+    level,
+    duration,
+    durationUnit,
+    tools,
+    description,
+    whatYouWillLearn,
+    targetAudience,
+    courseRequirements,
+    price,
+    discountPrice,
+    discountPercentage,
+    startDate,
+    endDate,
+    status,
+    visibility,
+    deletedAt,
+
+  } = req.body;
+
   try {
-    const course = await prisma.course.update({
-      where: { deletedAt: null, id },
-      data: courseData,
+    // Upload files if provided
+    const thumbnailFile = req?.files?.thumbnail?.[0];
+    const thumbnailUrl = thumbnailFile ? await uploadFile(thumbnailFile, 'courses-thumbnails') : "";
+
+    const imageUrlFile  = req?.files?.imageUrl?.[0];
+    const imageUrl = imageUrlFile ? await uploadFile(imageUrlFile, 'courses-images') : "";
+
+    const trailerFile = req?.files?.trailer?.[0];
+    const trailerUrl = trailerFile ? await uploadFile(trailerFile, 'courses-trailers') : "";
+
+    // Check if course exists
+    const existingCourse = await prisma.course.findUnique({
+      where: { id, deletedAt: null },
     });
 
-    if (!course) {
-      return next(new AppError("Course update failed", 404));
+    if (!existingCourse) {
+      return next(new AppError("Course not found", 404));
     }
 
-    if (course) {
-      res.status(200).json(course);
+    // Prepare update data
+    const updateData = {
+      title: title || existingCourse.title,
+      teacherId: teacherId,
+      subtitle: subtitle || existingCourse.subtitle,
+      categoryId: categoryId || existingCourse.categoryId,
+      subCategoryId: subCategoryId || existingCourse.subCategoryId,
+      topic: topic || existingCourse.topic,
+      language: language || existingCourse.language,
+      subtitleLanguages: subtitleLanguages || existingCourse.subtitleLanguages,
+      level: level || existingCourse.level,
+      duration: duration || existingCourse.duration,
+      durationUnit: durationUnit || existingCourse.durationUnit,
+      tools: tools || existingCourse.tools,
+      description: description || existingCourse.description,
+      thumbnail: thumbnailUrl || existingCourse.thumbnail,
+      trailer: trailerUrl || existingCourse.trailer,
+      price: price || existingCourse.price,
+      discountPrice: discountPrice || existingCourse.discountPrice,
+      discountPercentage: discountPercentage || existingCourse.discountPercentage,
+      startDate: startDate || existingCourse.startDate,
+      endDate: endDate || existingCourse.endDate,
+      imageUrl: imageUrl || existingCourse.imageUrl,
+      status: status || existingCourse.status,
+      visibility: visibility || existingCourse.visibility,
+      deletedAt: deletedAt || existingCourse.deletedAt,
+      updatedAt: new Date(),
+    };
+
+    // Conditionally update nested relations
+    if (whatYouWillLearn) {
+      updateData.learnings = {
+        deleteMany: {},
+        create: whatYouWillLearn.map((item) => ({
+          description: item.description,
+        })),
+      };
     }
+
+    if (targetAudience) {
+      updateData.targetAudiences = {
+        deleteMany: {},
+        create: targetAudience.map((item) => ({
+          description: item.description,
+        })),
+      };
+    }
+
+    if (courseRequirements) {
+      updateData.PreRequirement = {
+        deleteMany: {},
+        create: courseRequirements.map((item) => ({
+          description: item.description,
+        })),
+      };
+    }
+
+    // Final update
+    const updatedCourse = await prisma.course.update({
+      where: { id },
+      data: updateData,
+      include: {
+        learnings: true,
+        targetAudiences: true,
+        PreRequirement: true,
+      },
+    });
+
+    res.status(200).json(updatedCourse);
+
   } catch (error) {
-    return next(new AppError("something went wrong", 500));
+    console.error(error);
+    return next(new AppError("Something went wrong while updating the course", 500));
   }
 };
 

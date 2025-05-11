@@ -1,5 +1,5 @@
-import { Server } from 'socket.io';
-import { saveMsg } from '../src/controllers/chatController.js';
+import { Server } from "socket.io";
+import { saveMsg } from "../src/controllers/chatController.js";
 
 const onlineUsers = new Map();
 
@@ -16,8 +16,10 @@ const onlineUsers = new Map();
 // }
 
 const addUser = (user, socketId) => {
-    console.log("socket user", user);
-    onlineUsers.set(user._id, { ...user, socketId });
+
+  console.log("socket user", user);
+  onlineUsers.set(user._id, { ...user, socketId });
+
 };
 
 // const removeUser = (socketId) => {
@@ -27,16 +29,17 @@ const addUser = (user, socketId) => {
 //     }
 // }
 const removeUser = (socketId) => {
-    for (let [key, value] of onlineUsers.entries()) {
-        if (value.socketId === socketId) {
-            onlineUsers.delete(key);
-            break;
-        }
+  for (let [key, value] of onlineUsers.entries()) {
+    if (value.socketId === socketId) {
+      onlineUsers.delete(key);
+      break;
     }
+  }
 };
 
 const socketInit = (server) => {
-    console.log("test socket", server);
+
+    // console.log("test socket", server);
     const io = new Server(server, {
         cors: {
             origin: 'http://localhost:5173',
@@ -52,7 +55,7 @@ const socketInit = (server) => {
         });
 
         socket.on('SEND_MESSAGE', async(msg) => {
-            console.log("send message", msg);
+            // console.log("send message", msg);
             const saved = await saveMsg(msg);
               const receiverSocketId = onlineUsers.get(msg.receiver?._id)?.socketId;
             const senderSocketId = onlineUsers.get(msg.sender?._id)?.socketId;
@@ -97,6 +100,7 @@ const socketInit = (server) => {
             io.emit('USERS_ADDED', Array.from(onlineUsers.values()));
         });
     });
+  });
 };
 
 export default socketInit;

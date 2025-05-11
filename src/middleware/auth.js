@@ -22,6 +22,12 @@ export const protect = async (req, res, next) => {
     // 3) Check if user still exists
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
+      select: {
+        id: true,
+        firstName: true,
+        email: true,
+        role: true
+      }
     })
 
     if (!user) {
