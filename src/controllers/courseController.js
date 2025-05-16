@@ -136,81 +136,6 @@ export const getAllCourse = async (req, res, next) => {
 };
 
 // get course by id
-export const getCourseById = async (req, res, next) => {
-  const { id } = req.params;
-
-  try {
-    if (!id) {
-      return next(new AppError("Course ID is required", 400));
-    }
-
-    // Fetch main course data
-    const course = await prisma.course.findUnique({
-      where: {
-        id,
-        deletedAt: null,
-      },
-      include: {
-        instructor:true,
-        category: true,
-        subCategory: true,
-        reviews: {
-          include: {
-            user: true,
-          },
-        },
-        teacher: true,
-        assignments: true,
-        quizzes: true,
-        learnings: true,
-        targetAudiences: true,
-        PreRequirement: true,
-        Revenue: true,
-        Cart: true,
-        Wishlist: true,
-        CourseProgress: true,
-        payment: true,
-      },
-    });
-
-    if (!course) {
-      return next(new AppError("Course not found!", 404));
-    }
-
-    // Fetch modules (sections) with lessons
-    const modules = await prisma.module.findMany({
-      where: {
-        courseId: id,
-      },
-      include: {
-        lessons: true,
-      },
-    });
-
-    // Add modules to course
-    course.modules = modules;
-
-    // Calculate derived values
-    const reviews = course.reviews || [];
-    const reviewCount = reviews.length;
-    const averageRating = reviewCount
-      ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount).toFixed(1)
-      : null;
-
-    const isDiscounted = course.price > course.discountPrice;
-
-    // Attach derived fields
-    course.averageRating = averageRating;
-    course.reviewCount = reviewCount;
-    course.isDiscounted = isDiscounted;
-
-    res.status(200).json(course);
-  } catch (error) {
-    console.error("Error in getCourseById:", error);
-    return next(new AppError("Something went wrong", 500));
-  }
-};
-
 // export const getCourseById = async (req, res, next) => {
 //   const { id } = req.params;
 
@@ -219,38 +144,51 @@ export const getCourseById = async (req, res, next) => {
 //       return next(new AppError("Course ID is required", 400));
 //     }
 
-//     // Fetch only necessary fields
+//     // Fetch main course data
 //     const course = await prisma.course.findUnique({
 //       where: {
 //         id,
 //         deletedAt: null,
 //       },
-//       select: {
-//         id: true,
-//         title: true,
-//         price: true,
-//         discountPrice: true,
-//         category: {
-//           select: {
-//             name: true,
-//           },
-//         },
-//         subCategory: {
-//           select: {
-//             name: true,
-//           },
-//         },
+//       include: {
+//         instructor:true,
+//         category: true,
+//         subCategory: true,
 //         reviews: {
-//           select: {
-//             rating: true,
+//           include: {
+//             user: true,
 //           },
 //         },
+//         teacher: true,
+//         assignments: true,
+//         quizzes: true,
+//         learnings: true,
+//         targetAudiences: true,
+//         PreRequirement: true,
+//         Revenue: true,
+//         Cart: true,
+//         Wishlist: true,
+//         CourseProgress: true,
+//         payment: true,
 //       },
 //     });
 
 //     if (!course) {
 //       return next(new AppError("Course not found!", 404));
 //     }
+
+//     // Fetch modules (sections) with lessons
+//     const modules = await prisma.module.findMany({
+//       where: {
+//         courseId: id,
+//       },
+//       include: {
+//         lessons: true,
+//       },
+//     });
+
+//     // Add modules to course
+//     course.modules = modules;
 
 //     // Calculate derived values
 //     const reviews = course.reviews || [];
@@ -266,15 +204,106 @@ export const getCourseById = async (req, res, next) => {
 //     course.reviewCount = reviewCount;
 //     course.isDiscounted = isDiscounted;
 
-//     // Remove raw reviews from the response if not needed
-//     delete course.reviews;
-
 //     res.status(200).json(course);
 //   } catch (error) {
 //     console.error("Error in getCourseById:", error);
 //     return next(new AppError("Something went wrong", 500));
 //   }
 // };
+
+export const getCourseById = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    if (!id) {
+      return next(new AppError("Course ID is required", 400));
+    }
+
+    const course = await prisma.course.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        subtitle: true,
+        category: { select: { name: true } },
+        subCategory: { select: { name: true } },
+        topic: true,
+        description: true,
+        language: true,
+        subtitleLanguages: true,
+        level: true,
+        duration: true,
+        thumbnail: true,
+        trailer: true,
+        price: true,
+        discountPrice: true,
+        discountPercentage: true,
+        startDate: true,
+        endDate: true,
+        imageUrl: true,
+        deletedAt: true,
+        teacherId: true,
+        status: true,
+        visibility: true,
+        instructorId: true,
+        tags: true,
+        createdAt: true,
+        updatedAt: true,
+        tools: true,
+        welcomeMessage: true,
+        congratulationsMessage: true,
+        certificateTemplateUrl: true,
+      },
+    });
+
+    if (!course) {
+      return next(new AppError("Course not found!", 404));
+    }
+
+    // Aggregate reviews
+    const reviewsAggregate = await prisma.reviews.aggregate({
+      where: { courseId: id },
+      _count: { id: true },
+      _avg: { rating: true },
+    });
+
+    const reviewCount = reviewsAggregate._count.id || 0;
+    const averageRating = reviewsAggregate._avg.rating
+      ? reviewsAggregate._avg.rating.toFixed(1)
+      : null;
+
+    // Count enrollments
+    const enrollmentCount = await prisma.enrollment.count({
+      where: { courseId: id },
+    });
+
+    const isDiscounted =
+      course.price !== null &&
+      course.discountPrice !== null &&
+      course.price > course.discountPrice;
+
+    const response = {
+      ...course,
+      categoryName: course.category?.name || null,
+      subCategoryName: course.subCategory?.name || null,
+      reviewCount,
+      averageRating,
+      enrollmentCount,
+      isDiscounted,
+    };
+
+    // Remove full category and subCategory if name exists
+    if (response.categoryName) delete response.category;
+    if (response.subCategoryName) delete response.subCategory;
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error in getCourseById:", error);
+    return next(new AppError("Something went wrong", 500));
+  }
+};
+
+
 
 //course update
 export const UpdateCourse = async (req, res, next) => {
@@ -454,7 +483,7 @@ export const getInstructorByCourseId = async (req, res, next) => {
         },
       },
     });
-    
+
     if (!course || !course.instructor) {
       return res
         .status(404)
@@ -463,7 +492,6 @@ export const getInstructorByCourseId = async (req, res, next) => {
 
     const instructor = course.instructor;
     const courseIds = instructor.Course.map((c) => c.id);
-
     const totalCourses = courseIds.length;
 
     const totalStudents = await prisma.enrollment.count({
@@ -474,13 +502,19 @@ export const getInstructorByCourseId = async (req, res, next) => {
       },
     });
 
-    const totalRatings = await prisma.reviews.count({
+    // Calculate average rating for all courses of this instructor
+    const averageRatingResult = await prisma.reviews.aggregate({
       where: {
         courseId: {
           in: courseIds,
         },
       },
+      _avg: {
+        rating: true,
+      },
     });
+
+    const averageRating = averageRatingResult._avg.rating || 0;
 
     // Construct only the fields you need
     const user = instructor.user;
@@ -494,7 +528,7 @@ export const getInstructorByCourseId = async (req, res, next) => {
       },
       totalCourses,
       totalStudents,
-      totalRatings,
+      averageRating: parseFloat(averageRating.toFixed(1)), // Optional: format to 1 decimal place
     };
 
     return res.status(200).json({
@@ -508,39 +542,55 @@ export const getInstructorByCourseId = async (req, res, next) => {
 
 
 
+
 //get modules by course id
 export const getModulesByCourseId = async (req, res, next) => {
   try {
     const { courseId } = req.params;
 
     if (!courseId) {
-      // Use AppError for bad request
       return next(new AppError("Course ID is required", 400));
     }
 
     const modules = await prisma.module.findMany({
       where: { courseId },
-      include: {
-        lessons: true, // optional: include lessons if needed
-      },
+      include: { lessons: true },
+      orderBy: { order: 'asc' },
     });
 
-    if (!modules.length) {
-      // If no modules found, send 404 error
+    if (!modules?.length) {
       return next(new AppError("No modules found for this course", 404));
     }
+
+    // Flatten lessons and calculate stats in one loop
+    let totalLessons = 0;
+    let totalEstimatedMinutes = 0;
+
+    modules.forEach((mod) => {
+      totalLessons += mod.lessons.length;
+      mod.lessons.forEach((lesson) => {
+        totalEstimatedMinutes += lesson.estimatedTime || 0;
+      });
+    });
+
+    const hours = Math.floor(totalEstimatedMinutes / 60);
+    const minutes = totalEstimatedMinutes % 60;
+    const totalEstimatedTime = hours ? `${hours}h ${minutes}m` : `${minutes}m`;
 
     res.status(200).json({
       status: "success",
       results: modules.length,
+      totalModules: modules.length,
+      totalLessons,
+      totalEstimatedTime,
       data: modules,
     });
   } catch (error) {
-    console.error("Error fetching modules by course ID:", error);
-    // Pass error to global error handler via next()
+    console.error("Error fetching modules:", error);
     next(new AppError("Server error while fetching modules", 500));
   }
 };
+
 
 //get learnings by course id
 export const getLearningsByCourseId = async (req, res, next) => {
@@ -634,3 +684,78 @@ export const getCourseRequirementsByCourseId = async (req, res, next) => {
     next(new AppError("Server error while fetching course requirements", 500));
   }
 };  
+
+// get reviews by course id
+export const getReviewsByCourseId = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+
+    if (!courseId) {
+      return next(new AppError("Course ID is required", 400));
+    }
+
+    const courseWithReviews = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: {
+        reviews: {
+          select: {
+            id: true,
+            userId: true,
+            courseId: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+            updatedAt: true,
+            anonymous: true,
+            helpfulCount: true,
+            unhelpfulCount: true,
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+                imageUrl: true,
+              },
+            }
+          },
+        },
+      },
+    });
+
+    const reviews = courseWithReviews?.reviews || [];
+
+    if (!reviews.length) {
+      return next(new AppError("No reviews found for this course", 404));
+    }
+
+    // Calculate average rating and breakdown
+    const totalReviews = reviews.length;
+    let sumRatings = 0;
+    const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
+    for (const review of reviews) {
+      const rating = Math.round(review.rating);
+      sumRatings += rating;
+      if (breakdown[rating] !== undefined) breakdown[rating]++;
+    }
+
+    const averageRating = parseFloat((sumRatings / totalReviews).toFixed(1));
+
+    const percentageBreakdown = {};
+    for (let star = 1; star <= 5; star++) {
+      percentageBreakdown[star] = parseFloat(
+        ((breakdown[star] / totalReviews) * 100).toFixed(1)
+      );
+    }
+
+    res.status(200).json({
+      status: "success",
+      totalReviews,
+      averageRating,
+      breakdown: percentageBreakdown,
+      reviews,
+    });
+  } catch (error) {
+    console.error("Error fetching reviews by course ID:", error);
+    next(new AppError("Server error while fetching reviews", 500));
+  }
+};

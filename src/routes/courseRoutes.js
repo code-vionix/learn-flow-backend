@@ -9,6 +9,7 @@ import {
   getInstructorByCourseId,
   getLearningsByCourseId,
   getModulesByCourseId,
+  getReviewsByCourseId,
   getTargetAudiencesByCourseId,
   UpdateCourse,
 } from "../controllers/courseController.js";
@@ -44,5 +45,6 @@ router.get("/:courseId/modules", getModulesByCourseId);
 router.get("/:courseId/learnings", getLearningsByCourseId);
 router.get("/:courseId/targetAudiences", getTargetAudiencesByCourseId);
 router.get("/:courseId/requirements", getCourseRequirementsByCourseId);
+router.get("/:courseId/reviews", getReviewsByCourseId);
 
 export default router;
