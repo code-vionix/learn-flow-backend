@@ -5,6 +5,11 @@ import {
   DeleteCourse,
   getAllCourse,
   getCourseById,
+  getCourseRequirementsByCourseId,
+  getInstructorByCourseId,
+  getLearningsByCourseId,
+  getModulesByCourseId,
+  getTargetAudiencesByCourseId,
   UpdateCourse,
 } from "../controllers/courseController.js";
 import { protect } from "../middleware/auth.js";
@@ -34,5 +39,10 @@ router.put(
 );
 // router.patch("/:id", UpdateCourse);
 router.delete("/:id", DeleteCourse);
+router.get("/:courseId/instructor", getInstructorByCourseId);
+router.get("/:courseId/modules", getModulesByCourseId);
+router.get("/:courseId/learnings", getLearningsByCourseId);
+router.get("/:courseId/targetAudiences", getTargetAudiencesByCourseId);
+router.get("/:courseId/requirements", getCourseRequirementsByCourseId);
 
 export default router;
