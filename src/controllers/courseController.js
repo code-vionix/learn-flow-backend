@@ -4,7 +4,6 @@ import { prisma } from "../models/index.js";
 import { sortByType } from "../utils/sortByType.js";
 import { uploadFile } from "../utils/cloudinaryUpload.js";
 
-
 // create courese
 export const createCourse = async (req, res, next) => {
   const {
@@ -197,7 +196,6 @@ export const getCourseById = async (req, res, next) => {
   }
 };
 
-
 //course update
 export const UpdateCourse = async (req, res, next) => {
   const { id } = req.params;
@@ -226,19 +224,24 @@ export const UpdateCourse = async (req, res, next) => {
     status,
     visibility,
     deletedAt,
-
   } = req.body;
 
   try {
     // Upload files if provided
     const thumbnailFile = req?.files?.thumbnail?.[0];
-    const thumbnailUrl = thumbnailFile ? await uploadFile(thumbnailFile, 'courses-thumbnails') : "";
+    const thumbnailUrl = thumbnailFile
+      ? await uploadFile(thumbnailFile, "courses-thumbnails")
+      : "";
 
-    const imageUrlFile  = req?.files?.imageUrl?.[0];
-    const imageUrl = imageUrlFile ? await uploadFile(imageUrlFile, 'courses-images') : "";
+    const imageUrlFile = req?.files?.imageUrl?.[0];
+    const imageUrl = imageUrlFile
+      ? await uploadFile(imageUrlFile, "courses-images")
+      : "";
 
     const trailerFile = req?.files?.trailer?.[0];
-    const trailerUrl = trailerFile ? await uploadFile(trailerFile, 'courses-trailers') : "";
+    const trailerUrl = trailerFile
+      ? await uploadFile(trailerFile, "courses-trailers")
+      : "";
 
     // Check if course exists
     const existingCourse = await prisma.course.findUnique({
@@ -268,7 +271,8 @@ export const UpdateCourse = async (req, res, next) => {
       trailer: trailerUrl || existingCourse.trailer,
       price: price || existingCourse.price,
       discountPrice: discountPrice || existingCourse.discountPrice,
-      discountPercentage: discountPercentage || existingCourse.discountPercentage,
+      discountPercentage:
+        discountPercentage || existingCourse.discountPercentage,
       startDate: startDate || existingCourse.startDate,
       endDate: endDate || existingCourse.endDate,
       imageUrl: imageUrl || existingCourse.imageUrl,
@@ -318,10 +322,11 @@ export const UpdateCourse = async (req, res, next) => {
     });
 
     res.status(200).json(updatedCourse);
-
   } catch (error) {
     console.error(error);
-    return next(new AppError("Something went wrong while updating the course", 500));
+    return next(
+      new AppError("Something went wrong while updating the course", 500)
+    );
   }
 };
 

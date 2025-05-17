@@ -1,12 +1,12 @@
-import express from "express";
+// src/routes/lessonRoutes.ts
+import { Router } from "express";
+import lessonController, { upload } from "../controllers/lessonController";
+// import mockAuth from '../middleware/authMiddleware';
 
-import lessonController from "../controllers/lessonController.js";
-const router = express.Router();
-router.post("/", lessonController.createLesson); //"/api/vi"
-router.get("/", lessonController.getLessons);
-router.get("/:id", lessonController.getLessonById);
-router.put("/:id", lessonController.updateLesson);
-router.delete("/:id", lessonController.deleteLesson);
+const router = Router();
+
+// router.use(mockAuth);
+
 // Note: Lesson creation includes moduleId in the path
 router.post("/modules/:moduleId/lessons", lessonController.createLesson);
 router.put("/:lessonId", lessonController.updateLesson); // Update core lesson fields

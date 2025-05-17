@@ -1,32 +1,32 @@
 import express from "express";
-import { createInstructor, deleteInstructor, getAllInstructors, getInstructorById, updateInstructor } from "../controllers/instructorController.js";
-// import {
-//   createInstructor,
-//   deleteInstructor,
-//   getAllInstructors,
-//   getInstructorsById,
-//   updateInstructor,
-// } from "../controllers/instructorController.js";
+import {
+  createInstructor,
+  deleteInstructor,
+  getAllInstructors,
+  getInstructorById,
+  updateInstructor,
+} from "../controllers/instructorController.js";
 
-// const router = express.Router();
-
-// // Public routes
-// router.post("/", createInstructor);
-// router.get("/", getAllInstructors);
-// router.get("/:id", getInstructorsById);
-// router.patch("/:id", updateInstructor);
-// router.delete("/:id", deleteInstructor);
-
-// export default router;
-
+import {
+  createInstructorRating,
+  deleteInstructorRating,
+  getInstructorRatings,
+  updateInstructorRating,
+} from "../controllers/instructorRatingController.js";
 
 const router = express.Router();
 
 // Instructor Routes
-router.post("/", createInstructor);       // ✅ Create
-router.get("/", getAllInstructors);        // ✅ Get All
-router.get("/:id", getInstructorById);    // ✅ Get Single
-router.put("/:id", updateInstructor);     // ✅ Update
-router.delete("/:id", deleteInstructor);  // ✅ Delete
+router.post("/", createInstructor); // ✅ Create
+router.get("/", getAllInstructors); // ✅ Get All
+router.get("/:id", getInstructorById); // ✅ Get Single
+router.put("/:id", updateInstructor); // ✅ Update
+router.delete("/:id", deleteInstructor); // ✅ Delete
+
+// Instructor Rating Routes
+router.post("/ratings/", createInstructorRating);
+router.get("/ratings/:instructorId", getInstructorRatings);
+router.put("/ratings/:ratingId", updateInstructorRating);
+router.delete("/ratings/:ratingId", deleteInstructorRating);
 
 export default router;
