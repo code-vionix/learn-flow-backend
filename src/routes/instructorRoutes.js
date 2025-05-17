@@ -1,5 +1,5 @@
 import express from "express";
-import { createInstructor, deleteInstructor, getAllInstructors, getInstructorById, updateInstructor } from "../controllers/instructorController.js";
+import { createInstructor, deleteInstructor, getAllInstructors, getInstructorById, getTopInstructor, getTopInstructorOfMonth, updateInstructor } from "../controllers/instructorController.js";
 // import {
 //   createInstructor,
 //   deleteInstructor,
@@ -25,6 +25,8 @@ const router = express.Router();
 // Instructor Routes
 router.post("/", createInstructor);       // ✅ Create
 router.get("/", getAllInstructors);        // ✅ Get All
+router.get("/top-instructor-of-month", getTopInstructorOfMonth);        // ✅ Get All
+router.get("/popular-instructor", getTopInstructor);        // ✅ Get All
 router.get("/:id", getInstructorById);    // ✅ Get Single
 router.put("/:id", updateInstructor);     // ✅ Update
 router.delete("/:id", deleteInstructor);  // ✅ Delete

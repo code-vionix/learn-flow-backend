@@ -1,5 +1,9 @@
 import express from "express";
 import instructorRoutes from "./instructorRoutes.js";
+import testimonialRoutes from "./testimonialRoutes.js";
+import contactRoutes from "./contactRoutes.js";
+import faqRoutes from "./faqRoutes.js";
+import faqSubmissionRoute from "./faqSubmissionRoute.js";
 
 import lessonRoute from "./lessonRoute.js";
 import notificationRoute from "./notificationRoute.js";
@@ -43,6 +47,10 @@ router.use("/category", categoryRouter);
 router.use("/sub_category", subCategoryRouter);
 
 router.use("/instructors", instructorRoutes); 
+router.use("/testimonials", testimonialRoutes); 
+router.use("/contact", contactRoutes); 
+router.use("/faq", faqRoutes); 
+router.use("/faq-submit", faqSubmissionRoute); 
 router.use("/courses", courseRoutes); //api/v1/instructors
 
 router.use("/instructor-ratings", instructorRatings);
