@@ -26,6 +26,7 @@ import cardRouter from "./paymentCardRoute.js";
 import enrollRoute from "./paymentEnrollRouter.js";
 import purchesRouter from "./purchesHistoryRouter.js";
 import uploadRoutes from "./upload.route.js";
+import wishlistrouter from "./wishlistRoutes.js";
 
 const router = express.Router();
 
@@ -58,7 +59,6 @@ router.use("/question", questionRouter);
 router.use("/lesson", lessonRouter);
 router.use("/lesson", lessonRoute);
 
-
 router.use("/comments", commentRouter);
 router.use("/reply-comment", replyCommentRouter);
 
@@ -66,7 +66,7 @@ router.use("/payment", cardRouter);
 router.use("/purches", purchesRouter);
 
 router.use("/room", roomRouter);
-
+router.use("", wishlistrouter);
 // Handle 404 for API routes
 router.use(notFound);
 
