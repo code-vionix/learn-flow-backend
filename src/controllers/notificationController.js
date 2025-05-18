@@ -6,31 +6,45 @@ import { prisma } from "../models/index.js";
 // @access  Private
 export const createNotification = async (req, res, next) => {
   try {
-    const { message } = req.body;
-    const userId = req.user?.id || "67debbfbd62e2129820291dc"; // Fallback user ID for testing
+    const {
+      message,
+      buyCourse = false,
+      writeReview = false,
+      commentLecture = false,
+      downloadNotes = false,
+      replyComment = false,
+      visitProfile = false,
+      downloadFile = false,
+    } = req.body;
 
-    // Check if user is authenticated
+    const userId = req.user?.id;
+
     if (!userId) {
       return next(new AppError("Unauthorized request", 401));
     }
 
-    // Validate that the message is provided
     if (!message) {
       return next(new AppError("Message is required", 400));
     }
 
-    // Create a new notification in the database with deletedAt set to null explicitly
     const newNotification = await prisma.notification.create({
       data: {
         userId,
         message,
-        deletedAt: null, // Ensure deletedAt is explicitly set to null
+        buyCourse,
+        writeReview,
+        commentLecture,
+        downloadNotes,
+        replyComment,
+        visitProfile,
+        downloadFile,
+        deletedAt: null,
       },
     });
 
-    res.status(201).json(newNotification); // Send response with the created notification
+    res.status(201).json(newNotification);
   } catch (error) {
-    next(error); // Pass errors to the error handler middleware
+    next(error);
   }
 };
 
@@ -39,7 +53,7 @@ export const createNotification = async (req, res, next) => {
 // @access  Private
 export const getNotifications = async (req, res, next) => {
   try {
-    const userId = req.user?.id || "67debbfbd62e2129820291dc"; // Fallback user ID for testing
+    const userId = req.user?.id;
 
     // Check if user is authenticated
     if (!userId) {
@@ -72,7 +86,7 @@ export const getNotifications = async (req, res, next) => {
 export const getNotificationById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id || "67debbfbd62e2129820291dc"; // Fallback user ID for testing
+    const userId = req.user?.id;
 
     // Find notification where `deletedAt` is `null`
     const notification = await prisma.notification.findFirst({
@@ -96,50 +110,10 @@ export const getNotificationById = async (req, res, next) => {
 // @desc    Update a notification
 // @route   PUT /api/v1/notification/:id
 // @access  Private
-// export const updateNotification = async (req, res, next) => {
-//   try {
-//     const { id } = req.params;
-//     const { message } = req.body;
-//     const userId = req.user?.id;
-
-//     if (!message) return next(new AppError("Message is required", 400));
-
-//     const existingNotification = await prisma.notification.findUnique({
-//       where: { id },
-//     });
-
-//     if (!existingNotification || existingNotification.userId !== userId) {
-//       return next(new AppError("Notification not found", 404));
-//     }
-
-//     const updatedNotification = await prisma.notification.update({
-//       where: { id },
-//       data: { message },
-//     });
-
-//     res.status(200).json(updatedNotification);
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
-// @desc    Update a notification
-// @route   PUT /api/v1/notification/:id
-// @access  Private
 export const updateNotification = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const {
-      message,
-      buyCourse,
-      writeReview,
-      commentLecture,
-      downloadNotes,
-      replyComment,
-      visitProfile,
-      downloadFile,
-    } = req.body;
-    const userId = req.user?.id || "67debbfbd62e2129820291dc"; // fallback for testing
+    const userId = req.user?.id; // fallback for testing
 
     // Check if notification exists and belongs to user
     const existingNotification = await prisma.notification.findUnique({
@@ -153,14 +127,7 @@ export const updateNotification = async (req, res, next) => {
     const updatedNotification = await prisma.notification.update({
       where: { id },
       data: {
-        message,
-        buyCourse,
-        writeReview,
-        commentLecture,
-        downloadNotes,
-        replyComment,
-        visitProfile,
-        downloadFile,
+        isSeen: true,
       },
     });
 
@@ -170,15 +137,13 @@ export const updateNotification = async (req, res, next) => {
   }
 };
 
-
-
 // @desc    Delete a notification
 // @route   DELETE /api/v1/notification/:id
 // @access  Private
 export const deleteNotification = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id || "67debbfbd62e2129820291dc"; // Fallback user ID for testing
+    const userId = req.user?.id;
 
     // Validate input
     if (!id) {

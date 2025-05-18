@@ -7,10 +7,11 @@ export const createFaqGroup = async (req, res, next) => {
   try {
     const { role, category, faqs } = req.body;
 
-    if (!role || !category || !Array.isArray(faqs) || faqs.length === 0) {
-      return next(new AppError("Role, category, and at least one FAQ are required", 400));
+    if (!role || !category) {
+      return next(
+        new AppError("Role, category, ", 400)
+      );
     }
-
     const newGroup = await faqService.createFaqGroup({ role, category, faqs });
 
     return res.status(201).json({
@@ -88,7 +89,7 @@ export const updateFaqGroup = async (req, res, next) => {
     const { id } = req.params;
     const { role, category } = req.body;
 
-    const group = await faqService.getFaqGroupById(id);
+    const group = await faqService.getFaqsByCategoryId(id);
     if (!group) {
       return next(new AppError("FAQ group not found", 404));
     }
@@ -97,6 +98,51 @@ export const updateFaqGroup = async (req, res, next) => {
 
     return res.status(200).json({
       msg: "FAQ group updated successfully",
+      data: updated,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createFaq = async (req, res, next) => {
+  try {
+    const { question, answer,faqGroupId } = req.body;
+
+    const group = await faqService.getFaqsByCategoryId(faqGroupId);
+    if (!group) {
+      return next(new AppError("FAQ group not found", 404));
+    }
+
+    const newFaq = await faqService.createFaq({
+      question,
+      answer,
+      faqGroupId,
+    });
+
+    return res.status(201).json({
+      msg: "FAQ created successfully",
+      data: newFaq,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateFaq = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { question, answer } = req.body;
+
+    const faq = await faqService.getFaqById(id);
+    if (!faq) {
+      return next(new AppError("FAQ not found", 404));
+    }
+
+    const updated = await faqService.updateFaq(id, { question, answer });
+
+    return res.status(200).json({
+      msg: "FAQ updated successfully",
       data: updated,
     });
   } catch (error) {
@@ -130,5 +176,3 @@ export const deleteFaqGroup = async (req, res, next) => {
     next(error);
   }
 };
-
-

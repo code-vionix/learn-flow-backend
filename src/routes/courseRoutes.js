@@ -22,7 +22,6 @@ const upload = multer({
   });
 
 
-
 // Public routes
 router.post("/", protect, createCourse);
 router.get("/", getAllCourse);
@@ -31,7 +30,7 @@ router.get("/featured-course", getFeaturedCourses);
 router.get("/best-selling-category", getBestSellingCoursesByCategory);
 router.get("/:id", getCourseById);
 router.put(
-  "/:id",
+  "/:id",protect,
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "trailer", maxCount: 1 },
@@ -39,6 +38,6 @@ router.put(
   UpdateCourse
 );
 // router.patch("/:id", UpdateCourse);
-router.delete("/:id", DeleteCourse);
+router.delete("/:id", protect, DeleteCourse);
 
 export default router;
