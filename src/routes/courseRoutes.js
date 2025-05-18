@@ -4,7 +4,10 @@ import {
   createCourse,
   DeleteCourse,
   getAllCourse,
+  getBestSellingCourses,
+  getBestSellingCoursesByCategory,
   getCourseById,
+  getFeaturedCourses,
   UpdateCourse,
 } from "../controllers/courseController.js";
 import { protect } from "../middleware/auth.js";
@@ -23,6 +26,9 @@ const upload = multer({
 // Public routes
 router.post("/", protect, createCourse);
 router.get("/", getAllCourse);
+router.get("/best-selling", getBestSellingCourses);
+router.get("/featured-course", getFeaturedCourses);
+router.get("/best-selling-category", getBestSellingCoursesByCategory);
 router.get("/:id", getCourseById);
 router.put(
   "/:id",protect,
