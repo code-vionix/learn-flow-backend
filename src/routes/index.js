@@ -28,21 +28,22 @@ import roomRouter from "./roomRouter.js";
 
 import moduleRouter from "./moduleRoute.js";
 
+import coursePogressRouter from "./courseProgressRouter.js";
 import cardRouter from "./paymentCardRoute.js";
 import enrollRoute from "./paymentEnrollRouter.js";
 import purchesRouter from "./purchesHistoryRouter.js";
-import coursePogressRouter from "./courseProgressRouter.js";
-import uploadRoutes from "./upload.route.js"; 
+import uploadRoutes from "./upload.route.js";
+import wishlistrouter from "./wishlistRoutes.js";
 
 const router = express.Router();
 
 // API routes
-router.use("/users", userRoutes);  
+router.use("/users", userRoutes);
 
 router.use("/category", categoryRouter);
 router.use("/sub_category", subCategoryRouter);
 
-router.use("/instructors", instructorRoutes); 
+router.use("/instructors", instructorRoutes);
 router.use("/courses", courseRoutes); //api/v1/instructors
 
 router.use("/instructor-ratings", instructorRatings);
@@ -60,7 +61,6 @@ router.use("/question", questionRouter);
 
 router.use("/lesson", lessonRoute);
 
-
 router.use("/comments", commentRouter);
 router.use("/reply-comment", replyCommentRouter);
 router.use("/room", roomRouter);
@@ -70,16 +70,16 @@ router.use("/course", enrollRoute);
 router.use("/purches", purchesRouter);
 router.use("/course", coursePogressRouter);
 
-
 router.use("/upload", uploadRoutes); // ✅ Cloudinary uploads, optional
 
-router.use("/comments", commentRouter)
-router.use("/reply-comment", replyCommentRouter)
-router.use("/room", roomRouter)
+router.use("/comments", commentRouter);
+router.use("/reply-comment", replyCommentRouter);
+router.use("/room", roomRouter);
 
 router.use("/payment", cardRouter);
-router.use("/course", enrollRoute)
+router.use("/course", enrollRoute);
 
+router.use("", wishlistrouter);
 
 // Handle 404 for API routes
 router.use(notFound);

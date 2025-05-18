@@ -7,10 +7,12 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { userId, courseId, amount, currency } = req.body;
+    const { courseId, amount, currency = "usd" } = req.body;
+
+    const userId = req.user.id;
 
     // Validate input fields (simple check)
-    if (!userId || !courseId || !amount || !currency) {
+    if (!courseId || !amount) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -35,7 +37,8 @@ export const createCheckoutSession = async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: `http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}&course_id=${courseId}`, // URL to redirect on success
+      // success_url: `http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}&course_id=${courseId}`, // URL to redirect on success
+      success_url: `http://localhost:3001/`, // URL to redirect on success
       cancel_url: `http://localhost:3000/cancel`, // URL to redirect on cancel
       metadata: {
         userId: userId,
@@ -161,7 +164,6 @@ export const getUserPayments = async (req, res) => {
   }
 };
 
-
 export const getUserEnrollments = async (req, res) => {
   const { userId } = req.params;
 
@@ -181,20 +183,20 @@ export const getUserEnrollments = async (req, res) => {
             teacher: {
               select: {
                 firstName: true,
-                lastName: true
-              }
+                lastName: true,
+              },
             },
             CourseProgress: {
               where: { userId },
-              select: {               
-                progress: true,           
-              }
-            }
-          }
-        }
-      }
+              select: {
+                progress: true,
+              },
+            },
+          },
+        },
+      },
     });
-    
+
     const formatted = enrollments.map((enrollment) => {
       const { CourseProgress, ...courseData } = enrollment.course;
       const progress = CourseProgress?.[0]?.progress || 0;
@@ -206,8 +208,8 @@ export const getUserEnrollments = async (req, res) => {
         enrollmentDate: enrollment.enrollmentDate,
         course: {
           ...courseData,
-          progress
-        }
+          progress,
+        },
       };
     });
     // const enrichedEnrollments = await Promise.all(

@@ -19,9 +19,16 @@ const server = http.createServer(app) // Create HTTP server for Socket.IO
 app.use(helmet())
 app.use(cors())
 app.use(morgan("dev"))
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
 
+// Parse JSON and URL-encoded for all other routes
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/v1/course/webhook") {
+    return next(); // Skip parsing for webhook route
+  }
+  express.json()(req, res, () => {
+    express.urlencoded({ extended: true })(req, res, next);
+  });
+});
 
 // Routes
 app.use("/api/v1", routes)

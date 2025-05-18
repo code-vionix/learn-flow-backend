@@ -100,7 +100,7 @@ const socketInit = (server) => {
             io.emit('USERS_ADDED', Array.from(onlineUsers.values()));
         });
     });
-  });
+  
 };
 
 export default socketInit;

@@ -638,8 +638,8 @@ model Payment {
   amount                 Float
   currency               String
   method                 String
-  card                   PaymentCard @relation(fields: [cardId], references: [id])
-  cardId                 String      @db.ObjectId
+  card                   PaymentCard? @relation(fields: [cardId], references: [id])
+  cardId                 String?      @db.ObjectId
   status                 String? // Success, Failed
   createdAt              DateTime    @default(now())
   updatedAt              DateTime    @updatedAt
