@@ -300,14 +300,16 @@ model Lesson {
   Comment               Comment[]
   Attachment            Attachment[]
   lessonProgress        lessonProgress[]
-  order                 Int? // Order of the lessons within a module
+  order                 Int?             // Order of the lessons within a module
   lessonType            LessonType       @default(VIDEO)
   downloadableResources String[]
-  estimatedTime         Int? // In minutes
+  estimatedTime         Int?             // In minutes
   freePreview           Boolean          @default(false)
+  isFinished            Boolean          @default(false)  // New field added
 
   @@map("lessons")
 }
+
 
 model file {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId

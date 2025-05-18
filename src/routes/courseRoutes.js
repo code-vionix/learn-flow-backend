@@ -6,6 +6,7 @@ import {
   getAllCourse,
   getCourseById,
   getCourseRequirementsByCourseId,
+  getEnrolmentByCourseId,
   getInstructorByCourseId,
   getLearningsByCourseId,
   getModulesByCourseId,
@@ -46,5 +47,6 @@ router.get("/:courseId/learnings", getLearningsByCourseId);
 router.get("/:courseId/targetAudiences", getTargetAudiencesByCourseId);
 router.get("/:courseId/requirements", getCourseRequirementsByCourseId);
 router.get("/:courseId/reviews", getReviewsByCourseId);
+router.get("/:courseId/enrolments", getEnrolmentByCourseId);
 
 export default router;

@@ -759,3 +759,40 @@ export const getReviewsByCourseId = async (req, res, next) => {
     next(new AppError("Server error while fetching reviews", 500));
   }
 };
+// get enrolment by course id
+export const getEnrolmentByCourseId = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+
+    if (!courseId) {
+      return next(new AppError("Course ID is required", 400));
+    }
+
+    const enrolment = await prisma.enrollment.findMany({
+      where: { courseId },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            imageUrl: true,
+          },
+        },
+      },
+    });
+
+    if (!enrolment.length) {
+      return next(new AppError("No enrolment found for this course", 404));
+    }
+
+    res.status(200).json({
+      status: "success",
+      results: enrolment.length,
+      data: enrolment,
+    });
+  } catch (error) {
+    console.error("Error fetching enrolment by course ID:", error);
+    next(new AppError("Server error while fetching enrolment", 500));
+  }
+};
+ 
