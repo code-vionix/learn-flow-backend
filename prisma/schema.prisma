@@ -225,7 +225,7 @@ model Course {
   reviews                reviews[]
   Revenue                Revenue[]
   Cart                   Cart[]
-  durationUnit           String
+  durationUnit           String?
   tools                  String[]
   Wishlist               Wishlist[]
   CourseProgress         CourseProgress[]
@@ -233,7 +233,7 @@ model Course {
   congratulationsMessage String?
   certificateTemplateUrl String?
   payment                Payment[]
-  
+  isFeatureCourse        Boolean   @default(false)
 
   @@map("courses")
 }
@@ -692,6 +692,7 @@ model Notification {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deletedAt      DateTime?
+  isSeen         Boolean? @default(false)
 }
 
 model Cupon {
@@ -779,6 +780,55 @@ model SubscribedToNewsletter {
   userId    String?  @db.ObjectId
   user      User?    @relation(fields: [userId], references: [id])
   email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Testimonial {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  employer   String
+  company    String
+  message    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+model Contact {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName  String
+  lastName   String
+  email      String
+  subject    String
+  message    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt              DateTime?
+}
+model FaqGroup {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  role      String
+  category  String
+  faqs      Faq[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Faq {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  question   String
+  answer     String
+  faqGroup   FaqGroup @relation(fields: [faqGroupId], references: [id])
+  faqGroupId String   @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+}
+
+model FaqSubmission {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  subject   String
+  question  String
+  answer    String?
+  isApproved Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

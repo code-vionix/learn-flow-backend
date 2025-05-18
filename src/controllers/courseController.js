@@ -135,6 +135,113 @@ export const getAllCourse = async (req, res, next) => {
   }
 };
 
+// get best selling 
+export const getBestSellingCourses = async (req, res) => {
+  try {
+    const bestSellingCourses = await prisma.course.findMany({
+      where: {
+        deletedAt: null, // exclude deleted courses
+        status: 'PUBLISHED', // only published courses
+      },
+      include: {
+        _count: {
+          select: { enrollments: true },
+        },
+        category: {
+          select: { id: true, name: true },
+        },
+      },
+      orderBy: {
+        enrollments: {
+          _count: 'desc',
+        },
+      },
+      take: 10, // return top 10 best selling
+    });
+
+    res.status(200).json({
+      success: true,
+      data: bestSellingCourses,
+    });
+  } catch (error) {
+    console.error('Error fetching best selling courses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong.',
+    });
+  }
+};
+
+// get best selling 
+export const getFeaturedCourses = async (req, res) => {
+  try {
+    const bestSellingCourses = await prisma.course.findMany({
+      where: {
+        deletedAt: null,
+        isFeatureCourse: true,
+      },
+      take: 4,
+      include: {
+        category: { include: { SubCategory: true } },
+        subCategory: { select: { name: true } },
+        reviews: {
+          select: { rating: true, comment: true, userId: true, id: true },
+        },
+        enrollments: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: bestSellingCourses,
+    });
+  } catch (error) {
+    console.error('Error fetching best selling courses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong.',
+    });
+  }
+};
+
+//get best selling courses by category id
+export const getBestSellingCoursesByCategory = async (req, res) => {
+  try {
+    const bestSellingCourses = await prisma.course.findFirst({
+      where: {
+        deletedAt: null,
+        status: 'PUBLISHED',
+      },
+      orderBy: {
+        enrollments: {
+          _count: 'desc',
+        },
+      },
+      include: {
+        category: true,
+        subCategory: true,
+        instructor: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+  
+    res.status(200).json({
+      success: true,
+      data: bestSellingCourses,
+    });
+  } catch (error) {
+    console.error('Error fetching best selling courses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong.',
+    });
+  }
+};
+ 
+
 // get course by id
 export const getCourseById = async (req, res, next) => {
   const { id } = req.params;

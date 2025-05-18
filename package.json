@@ -14,6 +14,7 @@
   "dependencies": {
     "@prisma/client": "^6.7.0",
     "bcryptjs": "latest",
+    "body-parser": "^2.2.0",
     "cloudinary": "^2.6.1",
     "cors": "latest",
     "date-fns": "4.1.0",
