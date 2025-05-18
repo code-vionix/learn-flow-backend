@@ -1,19 +1,22 @@
 import { prisma } from "../models/index.js";
 
-
 export const faqService = {
   createFaqGroup: async ({ role, category, faqs }) => {
-    return await prisma.faqGroup.create({
-      data: {
-        role,
-        category,
+    const data = {
+      role,
+      category,
+      ...(faqs?.length > 0 && {
         faqs: {
           create: faqs.map((faq) => ({
             question: faq.question,
             answer: faq.answer,
           })),
         },
-      },
+      }),
+    };
+
+    return await prisma.faqGroup.create({
+      data,
       include: {
         faqs: true,
       },
@@ -30,14 +33,14 @@ export const faqService = {
       },
     });
   },
-  
+
   // get all faq group by id
   getFaqsByCategoryId: async (id) => {
     return await prisma.faqGroup.findUnique({
       where: { id },
       select: {
         faqs: true,
-      }
+      },
     });
   },
 
@@ -47,6 +50,12 @@ export const faqService = {
       orderBy: {
         createdAt: "desc",
       },
+    });
+  },
+
+  getFaqById: async (id) => {
+    return await prisma.faq.findUnique({
+      where: { id },
     });
   },
 
@@ -61,6 +70,26 @@ export const faqService = {
     });
   },
 
+  createFaq: async ({ question, answer, faqGroupId }) => {
+    return await prisma.faq.create({
+      data: {
+        question,
+        answer,
+        faqGroupId,
+      },
+    });
+  },
+
+  updateFaq: async (id, { question, answer }) => {
+    return await prisma.faq.update({
+      where: { id },
+      data: {
+        question,
+        answer,
+        updatedAt: new Date(),
+      },
+    });
+  },
   deleteFaqGroup: async (id) => {
     return await prisma.faqGroup.delete({
       where: { id },

@@ -692,6 +692,7 @@ model Notification {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deletedAt      DateTime?
+  isSeen         Boolean? @default(false)
 }
 
 model Cupon {

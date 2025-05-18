@@ -2,8 +2,20 @@ import { AppError } from "../middleware/errorHandler.js";
 import { prisma } from "../models/index.js";
 export const createInstructor = async (req, res, next) => {
   try {
-    const { userId, bio, about, website, facebook, instagram, linkedin, twitter, whatsapp, youtube } = req.body;
+    const {
+      bio,
+      about,
+      website,
+      facebook,
+      instagram,
+      linkedin,
+      twitter,
+      whatsapp,
+      youtube,
+    } = req.body;
 
+    const userId =await req.user?.id;
+    
     if (!userId) {
       return next(new AppError("userId is required", 400));
     }
@@ -21,6 +33,12 @@ export const createInstructor = async (req, res, next) => {
         whatsapp,
         youtube,
       },
+    });
+
+    // update user role
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: "TEACHER" },
     });
 
     return res.status(201).json({
@@ -53,8 +71,16 @@ export const getAllInstructors = async (req, res, next) => {
 
 export const getTopInstructorOfMonth = async (req, res, next) => {
   try {
-    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+    const startOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1
+    );
+    const endOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth() + 1,
+      0
+    );
 
     const topInstructors = await prisma.instructor.findMany({
       where: {
@@ -183,11 +209,11 @@ export const updateInstructor = async (req, res, next) => {
     const {
       firstName,
       lastName,
-      username,      // assuming this will be added to your user model
+      username, // assuming this will be added to your user model
       phoneNumber,
       imageUrl,
-      title,         // assuming this exists in instructor model
-      biography,     // assuming this maps to 'bio' in instructor model
+      title, // assuming this exists in instructor model
+      biography, // assuming this maps to 'bio' in instructor model
       about,
       website,
       facebook,
@@ -213,7 +239,7 @@ export const updateInstructor = async (req, res, next) => {
       data: {
         firstName,
         lastName,
-        imageUrl
+        imageUrl,
         // Include username if it's part of your schema
       },
     });

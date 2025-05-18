@@ -22,7 +22,6 @@ const upload = multer({
   });
 
 
-
 // Public routes
 router.post("/", protect, createCourse);
 router.get("/", getAllCourse);
