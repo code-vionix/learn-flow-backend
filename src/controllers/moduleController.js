@@ -36,8 +36,8 @@ export const createModule = async (req, res, next) => {
   try {
       const { 
           title,
-        courseId,
-        order,
+          courseId,
+          order,
      } = req?.body
 
     const moduleInfo = await moduleService.createModule({
