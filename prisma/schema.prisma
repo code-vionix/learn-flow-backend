@@ -263,6 +263,7 @@ model Learnings {
   @@map("learnings")
 }
 
+
 model TargetAudience {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   description String?
@@ -309,10 +310,10 @@ model Lesson {
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
   deletedAt             DateTime?
-  Quiz                  Quiz[]           @relation("QuizToLesson")
-  Note                  Note[]
-  Comment               Comment[]
-  Attachment            Attachment[]
+  quiz                  Quiz[]           @relation("QuizToLesson")
+  note                  Note[]
+  comment               Comment[]
+  attachment            Attachment[]
   lessonProgress        lessonProgress[]
   order                 Int? // Order of the lessons within a module
   lessonType            LessonType       @default(VIDEO)
@@ -344,6 +345,7 @@ model Attachment {
   lesson    Lesson   @relation(fields: [lessonId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?        @map("deleted_at") 
 }
 
 model Note {
@@ -355,6 +357,7 @@ model Note {
   lesson    Lesson   @relation(fields: [lessonId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
   userId    String?  @db.ObjectId
   User      User?    @relation(fields: [userId], references: [id])
 }
@@ -484,8 +487,8 @@ model Quiz {
   description    String?
   course         Course     @relation(fields: [courseId], references: [id])
   courseId       String     @db.ObjectId
-  lessionId      String     @db.ObjectId
-  lesson         Lesson     @relation("QuizToLesson", fields: [lessionId], references: [id])
+  lessonId      String     @db.ObjectId
+  lesson        Lesson     @relation("QuizToLesson", fields: [lessonId], references: [id])
   questions      Question[]
   grades         Grade[]
   createdAt      DateTime   @default(now())
