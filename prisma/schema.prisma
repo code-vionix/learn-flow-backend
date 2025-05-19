@@ -79,13 +79,12 @@ model User {
   updatedAt              DateTime  @updatedAt
   imageUrl               String?
   bio                    String?
+  title                  String? 
+  username               String? 
   portfolio              String?
   lastLogin              DateTime?
   lastLogout             DateTime?
   lastActive             DateTime?
-  passwordResetToken     String?
-  otp                    String?
-  otpExpiry              DateTime?
   emailVerified          Boolean   @default(false)
   emailVerificationToken String?
 
@@ -100,6 +99,8 @@ model User {
   tosAcceptedAt          DateTime?
   deletedAt              DateTime?
   subscribedToNewsletter Boolean    @default(false)
+  otp                    Otp?       @relation(fields: [otpId], references: [id], name: "UserOtp")
+  otpId                  String?    @unique @map("otp_id") @db.ObjectId
 
   // Related fields
   enrolledCourses        Enrollment[]
@@ -135,6 +136,19 @@ model User {
   @@map("users")
 }
 
+model Otp {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  code            String
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  verified        Boolean  @default(false)
+  failedAttempts  Int?     @default(0)
+  user            User?    @relation(name: "UserOtp")
+
+  @@map("otps")
+}
+
+
 model IPList {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
@@ -148,7 +162,6 @@ model Instructor {
   id        String             @id @default(auto()) @map("_id") @db.ObjectId
   userId    String             @unique @map("user_id") @db.ObjectId
   user      User               @relation(fields: [userId], references: [id])
-  title     String? // Tuhin
   phone     String? // Tuhin
   bio       String? // Tuhin
   about     String? // Talha
