@@ -40,10 +40,11 @@ export const createComment = async (req, res, next) => {
 export const getAllComments = async (req, res, next) => {
   try {
     const { lessonId } = req.query;
+    console.log(lessonId);
 
     const comments = await prisma.comment.findMany({
       where: {
-        lessonId: "6826bc13b354b64db00ec91b",
+        lessonId,
       },
       include: {
         author: {
