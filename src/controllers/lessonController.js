@@ -57,7 +57,6 @@ export const getLessons = async (req, res, next) => {
   }
 };
 
-
 export const getLessonById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -74,33 +73,16 @@ export const updateLesson = async (req, res, next) => {
   try {
     const { id } = req.params;
     // const { title, content, videoUrl } = req.body;
-    const videoFile = req.file;
     const existingLesson = await prisma.lesson.findUnique({ where: { id } });
     if (!existingLesson) return next(new AppError("Lesson not found", 404));
-
-    let videourl = null;
-    if (videoFile) {
-      try {
-        const uploadResponse = await cloudinary.uploader.upload(
-          videoFile.path,
-          {
-            resource_type: "video",
-            folder: "course_lessons",
-            upload_preset: "lesson_videos",
-          }
-        );
-        videourl = uploadResponse.secure_url;
-      } catch (uploadError) {
-        console.error("Cloudinary upload error:", uploadError);
-        return next(new AppError("Failed to upload video", 500));
-      }
-    }
 
     const updatedLesson = await prisma.lesson.update({
       where: { id },
       data: {
-        ...req.body,
-        videoUrl: videourl || existingLesson?.videoUrl ,
+        title: req.body.title || existingLesson.title,
+        content: req.body.content || existingLesson.content,
+        videoUrl: req.body.videoUrl || existingLesson.videoUrl,
+        caption: req.body.caption || existingLesson.caption,
       },
     });
 
@@ -109,7 +91,7 @@ export const updateLesson = async (req, res, next) => {
     next(error);
   }
 };
- 
+
 export const deleteLesson = async (req, res, next) => {
   try {
     const { id } = req.params;

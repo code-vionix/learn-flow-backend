@@ -266,7 +266,11 @@ export const getCourseById = async (req, res, next) => {
             user: true,
           },
         },
-        modules: true, // include what actually exists
+        modules: {
+            where: {
+                deletedAt: null,
+            },
+        },
         teacher: true,
         assignments: true,
         quizzes: true,
@@ -289,9 +293,14 @@ export const getCourseById = async (req, res, next) => {
     const modules = await prisma.module.findMany({
       where: {
         courseId: id,
-      },
+        deletedAt: null,
+        },
       include: {
-        lessons: true, // only if Module model has lessons relation
+        lessons: {
+            where: {
+                deletedAt: null,
+            },
+        },
       },
     });
 
