@@ -21,6 +21,7 @@
     "dotenv": "latest",
     "express": "latest",
     "helmet": "latest",
+    "i": "^0.3.7",
     "jsonwebtoken": "latest",
     "mongodb": "^6.15.0",
     "morgan": "latest",

@@ -7,7 +7,14 @@ import {
   getBestSellingCourses,
   getBestSellingCoursesByCategory,
   getCourseById,
+  getCourseRequirementsByCourseId,
+  getEnrolmentByCourseId,
   getFeaturedCourses,
+  getInstructorByCourseId,
+  getLearningsByCourseId,
+  getModulesByCourseId,
+  getReviewsByCourseId,
+  getTargetAudiencesByCourseId,
   UpdateCourse,
 } from "../controllers/courseController.js";
 import { protect } from "../middleware/auth.js";
@@ -38,6 +45,13 @@ router.put(
   UpdateCourse
 );
 // router.patch("/:id", UpdateCourse);
-router.delete("/:id", protect, DeleteCourse);
+router.delete("/:id", DeleteCourse);
+router.get("/:courseId/instructor", getInstructorByCourseId);
+router.get("/:courseId/modules", getModulesByCourseId);
+router.get("/:courseId/learnings", getLearningsByCourseId);
+router.get("/:courseId/targetAudiences", getTargetAudiencesByCourseId);
+router.get("/:courseId/requirements", getCourseRequirementsByCourseId);
+router.get("/:courseId/reviews", getReviewsByCourseId);
+router.get("/:courseId/enrolments", getEnrolmentByCourseId);
 
 export default router;

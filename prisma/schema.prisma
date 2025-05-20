@@ -110,7 +110,6 @@ model User {
   Note                   Note[]
   reviews                reviews[]
   Comment                Comment[]
-  Reply                  Reply[]
   sentMessages           Chat[]   @relation("SentMessages")
   receivedMessages       Chat[]  @relation("ReceivedMessages")
   PaymentCard            PaymentCard[]
@@ -238,7 +237,10 @@ model Course {
   reviews                reviews[]
   Revenue                Revenue[]
   Cart                   Cart[]
+<<<<<<< HEAD
+=======
   durationUnit           String?
+>>>>>>> 9c062275c6885a1f57b52f025efd063898d122ef
   tools                  String[]
   Wishlist               Wishlist[]
   CourseProgress         CourseProgress[]
@@ -315,14 +317,16 @@ model Lesson {
   comment               Comment[]
   attachment            Attachment[]
   lessonProgress        lessonProgress[]
-  order                 Int? // Order of the lessons within a module
+  order                 Int?             // Order of the lessons within a module
   lessonType            LessonType       @default(VIDEO)
   downloadableResources String[]
-  estimatedTime         Int? // In minutes
+  estimatedTime         Int?             // In minutes
   freePreview           Boolean          @default(false)
+  isFinished            Boolean          @default(false)  // New field added
 
   @@map("lessons")
 }
+
 
 model file {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -530,30 +534,25 @@ model reviews {
 }
 
 model Comment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
-  lessonId  String   @db.ObjectId
-  lesson    Lesson   @relation(fields: [lessonId], references: [id])
-  comment   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  lessonId   String
+  parentId   String?   // nullable for top-level comments
+  userId     String
+  text       String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  Reply Reply[]
+  author     User      @relation(fields: [userId], references: [id])
+  lesson     Lesson    @relation(fields: [lessonId], references: [id])
+
+  // Self-relation for nested replies
+  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies    Comment[] @relation("CommentReplies")
 }
 
-model Reply {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
-  commentId String   @db.ObjectId
-  comment   Comment  @relation(fields: [commentId], references: [id])
-  reply     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-}
+
+
+
 
 // model Chat {
 //   id               String            @id @default(auto()) @map("_id") @db.ObjectId

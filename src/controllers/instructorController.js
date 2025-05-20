@@ -54,9 +54,17 @@ export const getAllInstructors = async (req, res, next) => {
   try {
     const instructors = await prisma.instructor.findMany({
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+          },
+        },
         ratings: true,
-        Course: true,
+        Course: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
