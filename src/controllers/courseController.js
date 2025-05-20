@@ -4,7 +4,6 @@ import { prisma } from "../models/index.js";
 import { sortByType } from "../utils/sortByType.js";
 import { uploadFile } from "../utils/cloudinaryUpload.js";
 
-
 // create courese
 export const createCourse = async (req, res, next) => {
   const {
@@ -135,13 +134,13 @@ export const getAllCourse = async (req, res, next) => {
   }
 };
 
-// get best selling 
+// get best selling
 export const getBestSellingCourses = async (req, res) => {
   try {
     const bestSellingCourses = await prisma.course.findMany({
       where: {
         deletedAt: null, // exclude deleted courses
-        status: 'PUBLISHED', // only published courses
+        status: "PUBLISHED", // only published courses
       },
       include: {
         _count: {
@@ -153,7 +152,7 @@ export const getBestSellingCourses = async (req, res) => {
       },
       orderBy: {
         enrollments: {
-          _count: 'desc',
+          _count: "desc",
         },
       },
       take: 10, // return top 10 best selling
@@ -164,15 +163,15 @@ export const getBestSellingCourses = async (req, res) => {
       data: bestSellingCourses,
     });
   } catch (error) {
-    console.error('Error fetching best selling courses:', error);
+    console.error("Error fetching best selling courses:", error);
     res.status(500).json({
       success: false,
-      message: 'Something went wrong.',
+      message: "Something went wrong.",
     });
   }
 };
 
-// get best selling 
+// get best selling
 export const getFeaturedCourses = async (req, res) => {
   try {
     const bestSellingCourses = await prisma.course.findMany({
@@ -196,10 +195,10 @@ export const getFeaturedCourses = async (req, res) => {
       data: bestSellingCourses,
     });
   } catch (error) {
-    console.error('Error fetching best selling courses:', error);
+    console.error("Error fetching best selling courses:", error);
     res.status(500).json({
       success: false,
-      message: 'Something went wrong.',
+      message: "Something went wrong.",
     });
   }
 };
@@ -210,11 +209,11 @@ export const getBestSellingCoursesByCategory = async (req, res) => {
     const bestSellingCourses = await prisma.course.findFirst({
       where: {
         deletedAt: null,
-        status: 'PUBLISHED',
+        status: "PUBLISHED",
       },
       orderBy: {
         enrollments: {
-          _count: 'desc',
+          _count: "desc",
         },
       },
       include: {
@@ -227,20 +226,19 @@ export const getBestSellingCoursesByCategory = async (req, res) => {
         },
       },
     });
-  
+
     res.status(200).json({
       success: true,
       data: bestSellingCourses,
     });
   } catch (error) {
-    console.error('Error fetching best selling courses:', error);
+    console.error("Error fetching best selling courses:", error);
     res.status(500).json({
       success: false,
-      message: 'Something went wrong.',
+      message: "Something went wrong.",
     });
   }
 };
- 
 
 // get course by id
 // export const getCourseById = async (req, res, next) => {
@@ -327,7 +325,7 @@ export const getCourseById = async (req, res, next) => {
     }
 
     const course = await prisma.course.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       select: {
         id: true,
         title: true,
@@ -360,6 +358,26 @@ export const getCourseById = async (req, res, next) => {
         welcomeMessage: true,
         congratulationsMessage: true,
         certificateTemplateUrl: true,
+        isFeatureCourse: true,
+        modules: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            title: true,
+            lessons: {
+              where: { deletedAt: null },
+              select: {
+                id: true,
+                title: true,
+                videoUrl: true,
+                caption: true,
+                note: true,
+                attachment: true,
+                content: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -410,8 +428,6 @@ export const getCourseById = async (req, res, next) => {
   }
 };
 
-
-
 //course update
 export const UpdateCourse = async (req, res, next) => {
   const { id } = req.params;
@@ -440,19 +456,24 @@ export const UpdateCourse = async (req, res, next) => {
     status,
     visibility,
     deletedAt,
-
   } = req.body;
 
   try {
     // Upload files if provided
     const thumbnailFile = req?.files?.thumbnail?.[0];
-    const thumbnailUrl = thumbnailFile ? await uploadFile(thumbnailFile, 'courses-thumbnails') : "";
+    const thumbnailUrl = thumbnailFile
+      ? await uploadFile(thumbnailFile, "courses-thumbnails")
+      : "";
 
-    const imageUrlFile  = req?.files?.imageUrl?.[0];
-    const imageUrl = imageUrlFile ? await uploadFile(imageUrlFile, 'courses-images') : "";
+    const imageUrlFile = req?.files?.imageUrl?.[0];
+    const imageUrl = imageUrlFile
+      ? await uploadFile(imageUrlFile, "courses-images")
+      : "";
 
     const trailerFile = req?.files?.trailer?.[0];
-    const trailerUrl = trailerFile ? await uploadFile(trailerFile, 'courses-trailers') : "";
+    const trailerUrl = trailerFile
+      ? await uploadFile(trailerFile, "courses-trailers")
+      : "";
 
     // Check if course exists
     const existingCourse = await prisma.course.findUnique({
@@ -482,7 +503,8 @@ export const UpdateCourse = async (req, res, next) => {
       trailer: trailerUrl || existingCourse.trailer,
       price: price || existingCourse.price,
       discountPrice: discountPrice || existingCourse.discountPrice,
-      discountPercentage: discountPercentage || existingCourse.discountPercentage,
+      discountPercentage:
+        discountPercentage || existingCourse.discountPercentage,
       startDate: startDate || existingCourse.startDate,
       endDate: endDate || existingCourse.endDate,
       imageUrl: imageUrl || existingCourse.imageUrl,
@@ -532,10 +554,11 @@ export const UpdateCourse = async (req, res, next) => {
     });
 
     res.status(200).json(updatedCourse);
-
   } catch (error) {
     console.error(error);
-    return next(new AppError("Something went wrong while updating the course", 500));
+    return next(
+      new AppError("Something went wrong while updating the course", 500)
+    );
   }
 };
 
@@ -647,9 +670,6 @@ export const getInstructorByCourseId = async (req, res, next) => {
   }
 };
 
-
-
-
 //get modules by course id
 export const getModulesByCourseId = async (req, res, next) => {
   try {
@@ -662,7 +682,7 @@ export const getModulesByCourseId = async (req, res, next) => {
     const modules = await prisma.module.findMany({
       where: { courseId },
       include: { lessons: true },
-      orderBy: { order: 'asc' },
+      orderBy: { order: "asc" },
     });
 
     if (!modules?.length) {
@@ -698,7 +718,6 @@ export const getModulesByCourseId = async (req, res, next) => {
   }
 };
 
-
 //get learnings by course id
 export const getLearningsByCourseId = async (req, res, next) => {
   try {
@@ -711,9 +730,9 @@ export const getLearningsByCourseId = async (req, res, next) => {
     const learnings = await prisma.course.findUnique({
       where: { id: courseId },
       select: {
-        learnings:{select:{description:true}}},
+        learnings: { select: { description: true } },
       },
-    );
+    });
 
     if (!learnings) {
       return next(new AppError("No learnings found for this course", 404));
@@ -728,7 +747,7 @@ export const getLearningsByCourseId = async (req, res, next) => {
     console.error("Error fetching learnings by course ID:", error);
     next(new AppError("Server error while fetching learnings", 500));
   }
-};  
+};
 
 //get target audiences by course id
 export const getTargetAudiencesByCourseId = async (req, res, next) => {
@@ -742,12 +761,14 @@ export const getTargetAudiencesByCourseId = async (req, res, next) => {
     const targetAudiences = await prisma.course.findUnique({
       where: { id: courseId },
       select: {
-        targetAudiences:{select:{description:true}}},
+        targetAudiences: { select: { description: true } },
       },
-    );
+    });
 
     if (!targetAudiences) {
-      return next(new AppError("No target audiences found for this course", 404));
+      return next(
+        new AppError("No target audiences found for this course", 404)
+      );
     }
 
     res.status(200).json({
@@ -759,7 +780,7 @@ export const getTargetAudiencesByCourseId = async (req, res, next) => {
     console.error("Error fetching target audiences by course ID:", error);
     next(new AppError("Server error while fetching target audiences", 500));
   }
-};  
+};
 
 //get course requirements by course id
 export const getCourseRequirementsByCourseId = async (req, res, next) => {
@@ -773,12 +794,14 @@ export const getCourseRequirementsByCourseId = async (req, res, next) => {
     const courseRequirements = await prisma.course.findUnique({
       where: { id: courseId },
       select: {
-        PreRequirement:{select:{description:true}}},
+        PreRequirement: { select: { description: true } },
       },
-    );
+    });
 
     if (!courseRequirements) {
-      return next(new AppError("No course requirements found for this course", 404));
+      return next(
+        new AppError("No course requirements found for this course", 404)
+      );
     }
 
     res.status(200).json({
@@ -790,7 +813,7 @@ export const getCourseRequirementsByCourseId = async (req, res, next) => {
     console.error("Error fetching course requirements by course ID:", error);
     next(new AppError("Server error while fetching course requirements", 500));
   }
-};  
+};
 
 // get reviews by course id
 export const getReviewsByCourseId = async (req, res, next) => {
@@ -822,7 +845,7 @@ export const getReviewsByCourseId = async (req, res, next) => {
                 lastName: true,
                 imageUrl: true,
               },
-            }
+            },
           },
         },
       },
@@ -902,4 +925,3 @@ export const getEnrolmentByCourseId = async (req, res, next) => {
     next(new AppError("Server error while fetching enrolment", 500));
   }
 };
- 

@@ -207,6 +207,7 @@ model Course {
   subtitleLanguages  String[]
   level              Difficulty   @default(BEGINNER)
   duration           String?
+  durationUnit       String?
   thumbnail          String?
   trailer            String?
   price              Float?
@@ -237,10 +238,6 @@ model Course {
   reviews                reviews[]
   Revenue                Revenue[]
   Cart                   Cart[]
-<<<<<<< HEAD
-=======
-  durationUnit           String?
->>>>>>> 9c062275c6885a1f57b52f025efd063898d122ef
   tools                  String[]
   Wishlist               Wishlist[]
   CourseProgress         CourseProgress[]
