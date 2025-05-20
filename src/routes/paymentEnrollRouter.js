@@ -1,5 +1,5 @@
-import express from "express";
 import bodyParser from "body-parser";
+import express from "express";
 
 import {
   createCheckoutSession,
@@ -9,18 +9,21 @@ import {
   getUserPayments,
   stripeWebhook,
 } from "../controllers/paymentEnrollController.js";
+import { protect } from "../middleware/auth.js";
 
 const enrollRoute = express.Router();
 
-enrollRoute.post("/checkoutSession", createCheckoutSession);
 enrollRoute.post(
   "/webhook",
-  bodyParser.raw({ type: "application/json" }),
+  bodyParser.raw({ type: "application/json" }), // <-- This ensures raw data is passed to the controller
   stripeWebhook
 );
+
+enrollRoute.post("/checkoutSession", protect, createCheckoutSession);
+
 enrollRoute.get("/all-payments", getAllPayments);
 enrollRoute.get("/all-enrollments", getAllEnrollments);
-enrollRoute.get("/user-payment/:userId", getUserPayments);
-enrollRoute.get("/user-enroll/:userId", getUserEnrollments);
+enrollRoute.get("/user-payment/:userId", protect, getUserPayments);
+enrollRoute.get("/user-enroll/:userId", protect, getUserEnrollments);
 
 export default enrollRoute;
