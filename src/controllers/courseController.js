@@ -134,6 +134,21 @@ export const getAllCourse = async (req, res, next) => {
   }
 };
 
+// get course by instructorId
+export const getCourseByInstructorId = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const courses = await prisma.course.findMany({
+      where: {
+        instructorId : id,
+      },
+    });
+    res.status(200).json(courses);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // get best selling
 export const getBestSellingCourses = async (req, res) => {
   try {
