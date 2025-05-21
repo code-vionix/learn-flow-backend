@@ -77,6 +77,7 @@ export const getAllInstructors = async (req, res, next) => {
   }
 };
 
+
 export const getTopInstructorOfMonth = async (req, res, next) => {
   try {
     const startOfMonth = new Date(
