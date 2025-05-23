@@ -25,6 +25,7 @@ const generateRefreshToken = (id) => {
 export const regenerateAccessToken = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
+    console.log(refreshToken)
 
     if (!refreshToken) {
       return next(new AppError("Refresh token is required", 400));
@@ -161,18 +162,18 @@ export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Check for user email
     const user = await prisma.user.findUnique({
       where: { email },
     });
 
-    // Check if user exists and password matches
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
         id: user.id,
-        name: user.name,
         email: user.email,
+        name: `${user.firstName} ${user.lastName}`,
         role: user.role,
+        image: user.imageUrl,
+        bio: user.bio,
         accessToken: generateToken(user.id, user.role),
         refreshToken: generateRefreshToken(user.id),
       });
@@ -183,6 +184,7 @@ export const loginUser = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // @desc    Get user profile
 // @route   GET /api/v1/users/profile
