@@ -14,8 +14,8 @@ export const createInstructor = async (req, res, next) => {
       youtube,
     } = req.body;
 
-    const userId =await req.user?.id;
-    
+    const userId = await req.user?.id;
+
     if (!userId) {
       return next(new AppError("userId is required", 400));
     }
@@ -57,14 +57,16 @@ export const getAllInstructors = async (req, res, next) => {
         user: {
           select: {
             id: true,
+            firstName: true,
+            lastName: true,
+            imageUrl: true,
+            country: true,
+            city: true,
+            createdCourses: true,
           },
         },
         ratings: true,
-        Course: {
-          select: {
-            id: true,
-          },
-        },
+        CourseInstructor: true,
       },
     });
 
@@ -77,6 +79,211 @@ export const getAllInstructors = async (req, res, next) => {
   }
 };
 
+export const getInstructorById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const instructor = await prisma.instructor.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            imageUrl: true,
+            country: true,
+            city: true,
+            createdCourses: {
+              include: {
+                enrollments: true,
+                reviews: true,
+                category: true,
+                subCategory: true,
+              },
+            },
+          },
+        },
+        ratings: {
+          include: {
+            user: true, // 👉 includes user data for each rating
+          },
+        },
+        CourseInstructor: true,
+      },
+    });
+
+    if (!instructor) {
+      return next(new AppError("Instructor not found", 404));
+    }
+
+    const totalInstructedCourses = instructor.CourseInstructor.reduce(
+      (acc, course) => acc + course.enrollments.length,
+      0
+    );
+
+    const totalReviews = instructor.CourseInstructor.reduce(
+      (acc, course) => acc + course.reviews.length,
+      0
+    );
+    const totalCourses = instructor.user.createdCourses.length;
+    const totalStudents = await prisma.enrollment.count({
+      where: {
+        courseId: {
+          in: instructor.user.createdCourses.map((c) => c.id),
+        },
+      },
+    });
+    return res.status(200).json({
+      msg: "Instructor found",
+      data: {
+        totalInstructedCourses,
+        totalReviews,
+        totalCourses,
+        totalStudents,
+        info: {
+          id: instructor.id,
+          bio: instructor.bio,
+          about: instructor.about,
+          website: instructor.website,
+          facebook: instructor.facebook,
+          instagram: instructor.instagram,
+          linkedin: instructor.linkedin,
+          twitter: instructor.twitter,
+          whatsapp: instructor.whatsapp,
+          youtube: instructor.youtube,
+          firstName: instructor.user.firstName,
+          lastName: instructor.user.lastName,
+          imageUrl: instructor.user.imageUrl,
+          country: instructor.user.country,
+          city: instructor.user.city,
+        },
+        myCourses: instructor.user.createdCourses,
+        instructedCourses: instructor.CourseInstructor,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllInstructorListForAddingInCourse = async (req, res, next) => {
+  try {
+    const instructors = await prisma.instructor.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            imageUrl: true,
+            country: true,
+            city: true,
+          },
+        },
+      },
+    });
+    const instructorList = instructors.map((instructor) => {
+      return {
+        id: instructor.id,
+        name: instructor.user.firstName + " " + instructor.user.lastName,
+        imageUrl: instructor.user.imageUrl,
+        country: instructor.user.country,
+        city: instructor.user.city,
+        userId: instructor.user.id,
+      };
+    });
+    return res.status(200).json({
+      msg: "Instructor list fetched successfully",
+      data: instructorList,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getInstructorByUserId = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const instructor = await prisma.instructor.findUnique({
+      where: { userId: id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            imageUrl: true,
+            country: true,
+            city: true,
+            createdCourses: {
+              include: {
+                enrollments: true,
+                reviews: true,
+                category: true,
+                subCategory: true,
+              },
+            },
+          },
+        },
+        ratings: {
+          include: {
+            user: true, // 👉 includes user data for each rating
+          },
+        },
+        CourseInstructor: true,
+      },
+    });
+
+    if (!instructor) {
+      return next(new AppError("Instructor not found", 404));
+    }
+
+ 
+
+    const totalReviews = instructor.CourseInstructor.reduce(
+      (acc, course) => acc + (course?.reviews?.length || 0),
+      0
+    );
+    const totalCourses = instructor.user.createdCourses.length;
+    const totalStudents = await prisma.enrollment.count({
+      where: {
+        courseId: {
+          in: instructor.user.createdCourses.map((c) => c.id),
+        },
+      },
+    });
+    return res.status(200).json({
+      msg: "Instructor found",
+      data: {
+        totalInstructedCourses: instructor?.CourseInstructor?.length || 0,
+        totalReviews,
+        totalCourses,
+        totalStudents,
+        info: {
+          id: instructor.id,
+          bio: instructor.bio,
+          about: instructor.about,
+          website: instructor.website,
+          facebook: instructor.facebook,
+          instagram: instructor.instagram,
+          linkedin: instructor.linkedin,
+          twitter: instructor.twitter,
+          whatsapp: instructor.whatsapp,
+          youtube: instructor.youtube,
+          firstName: instructor.user.firstName,
+          lastName: instructor.user.lastName,
+          imageUrl: instructor.user.imageUrl,
+          country: instructor.user.country,
+          city: instructor.user.city,
+        },
+        myCourses: instructor.user.createdCourses,
+        instructedCourses: instructor.CourseInstructor,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const getTopInstructorOfMonth = async (req, res, next) => {
   try {
@@ -154,58 +361,6 @@ export const getTopInstructor = async (req, res, next) => {
       .slice(0, 5); // Top 5
 
     res.status(200).json(sortedInstructors);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getInstructorById = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    console.log("instructor id", id);
-
-    const instructor = await prisma.instructor.findUnique({
-      where: { userId: id },
-      include: {
-        user: true,
-        ratings: {
-          include: {
-            user: true, // 👉 includes user data for each rating
-          },
-        },
-        Course: {
-          include: {
-            enrollments: true,
-            reviews: true,
-            category: true,
-            subCategory: true,
-          },
-        },
-      },
-    });
-
-    if (!instructor) {
-      return next(new AppError("Instructor not found", 404));
-    }
-
-    const totalEnrollments = instructor.Course.reduce(
-      (acc, course) => acc + course.enrollments.length,
-      0
-    );
-
-    const totalReviews = instructor.Course.reduce(
-      (acc, course) => acc + course.reviews.length,
-      0
-    );
-
-    return res.status(200).json({
-      msg: "Instructor found",
-      data: {
-        instructor,
-        totalEnrollments,
-        totalReviews,
-      },
-    });
   } catch (error) {
     next(error);
   }

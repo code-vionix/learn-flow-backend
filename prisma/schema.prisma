@@ -68,6 +68,30 @@ enum ReactionType {
 }
 
 // Models
+
+model Otp {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  code            String
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  verified        Boolean  @default(false)
+  failedAttempts  Int?     @default(0)
+  userId          String   @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id])
+  isActive        Boolean  @default(true)
+  @@map("otps")
+}
+
+
+model IPList {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  ip        String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
   id                     String    @id @default(auto()) @map("_id") @db.ObjectId
   email                  String    @unique
@@ -99,9 +123,6 @@ model User {
   tosAcceptedAt          DateTime?
   deletedAt              DateTime?
   subscribedToNewsletter Boolean    @default(false)
-  otp                    Otp?       @relation(fields: [otpId], references: [id], name: "UserOtp")
-  otpId                  String?    @unique @map("otp_id") @db.ObjectId
-
   // Related fields
   enrolledCourses        Enrollment[]
   createdCourses         Course[]                 @relation("TeacherCourses")
@@ -133,29 +154,10 @@ model User {
   NotificationList       NotificationList[]
 
   @@map("users")
-}
-
-model Otp {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  code            String
-  createdAt       DateTime @default(now())
-  expiresAt       DateTime
-  verified        Boolean  @default(false)
-  failedAttempts  Int?     @default(0)
-  user            User?    @relation(name: "UserOtp")
-
-  @@map("otps")
+  Otp Otp[]
 }
 
 
-model IPList {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
-  ip        String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
 
 model Instructor {
   id        String             @id @default(auto()) @map("_id") @db.ObjectId
@@ -174,10 +176,18 @@ model Instructor {
   createdAt DateTime?          @default(now()) @map("created_at") // Talha
   updatedAt DateTime?          @default(now()) @map("updated_at") // Talha
   deletedAt DateTime?          @map("deleted_at")
-  Course    Course[]
   ratings   InstructorRating[]
 
   @@map("Instructors")
+  CourseInstructor CourseInstructor[]
+}
+
+model CourseInstructor {
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
+  courseId  String             @db.ObjectId
+  course    Course             @relation(fields: [courseId], references: [id])
+  instructorId String             @db.ObjectId
+  instructor Instructor         @relation(fields: [instructorId], references: [id])
 }
 
 model InstructorRating {
@@ -217,12 +227,17 @@ model Course {
   endDate            DateTime?
   imageUrl           String?
   deletedAt          DateTime?
+  
+  // 👇 Creator (Teacher)
   teacherId          String       @db.ObjectId
   teacher            User         @relation("TeacherCourses", fields: [teacherId], references: [id])
+
   status             CourseStatus @default(DRAFT)
-  visibility         String       @default("PUBLIC") // PUBLIC, PRIVATE, UNLISTED
-  instructorId       String?      @db.ObjectId
-  instructor         Instructor?  @relation(fields: [instructorId], references: [id]) // relationship with instructor model
+  visibility         String       @default("PUBLIC")
+
+  // 🔁 Removed single instructorId relationship
+  // instructorId       String?      @db.ObjectId
+  // instructor         Instructor?  @relation(fields: [instructorId], references: [id])
 
   // Related fields
   tags                   String[]
@@ -247,8 +262,12 @@ model Course {
   payment                Payment[]
   isFeatureCourse        Boolean   @default(false)
 
+  // 👇 Many-to-many instructors
+  CourseInstructor CourseInstructor[]
+
   @@map("courses")
 }
+
 
 model Learnings {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -532,9 +551,9 @@ model reviews {
 
 model Comment {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  lessonId   String
-  parentId   String?   // nullable for top-level comments
-  userId     String
+  lessonId   String    @db.ObjectId
+  parentId   String?   @db.ObjectId // nullable for top-level comments
+  userId     String    @db.ObjectId
   text       String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt

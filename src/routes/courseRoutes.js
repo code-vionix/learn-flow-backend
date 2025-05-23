@@ -7,7 +7,7 @@ import {
   getBestSellingCourses,
   getBestSellingCoursesByCategory,
   getCourseById,
-  getCourseByInstructorId,
+  getCourseByTeacherId,
   getCourseRequirementsByCourseId,
   getEnrolmentByCourseId,
   getFeaturedCourses,
@@ -37,7 +37,7 @@ router.get("/best-selling", getBestSellingCourses);
 router.get("/featured-course", getFeaturedCourses);
 router.get("/best-selling-category", getBestSellingCoursesByCategory);
 router.get("/:id", getCourseById);
-router.get("/instructor/:id", getCourseByInstructorId);
+router.get("/teacher/:id", getCourseByTeacherId);
 router.put(
   "/:id",protect,
   upload.fields([
