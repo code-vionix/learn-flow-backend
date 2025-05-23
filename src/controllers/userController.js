@@ -213,6 +213,34 @@ export const getUserProfile = async (req, res, next) => {
   }
 };
 
+export const updateUserProfile = async (req, res, next) => {
+  try {
+    const { firstName, lastName, email } = req.body;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        firstName,
+        lastName,
+        email,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 // @desc    Get all users
 // @route   GET /api/v1/users
 // @access  Private/Admin

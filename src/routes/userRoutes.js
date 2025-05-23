@@ -10,6 +10,7 @@ import {
   regenerateAccessToken,
   registerUser,
   updateUser,
+  updateUserProfile,
 } from "../controllers/userController.js";
 import { protect, restrictTo } from "../middleware/auth.js";
 
@@ -29,6 +30,7 @@ router.use(protect);
 
 // User profile
 router.get("/profile", getUserProfile); //api/v1/users/profile
+router.put("/profile", updateUserProfile);
 
 // Admin only routes
 router.use(restrictTo("ADMIN"));

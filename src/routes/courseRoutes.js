@@ -4,9 +4,13 @@ import {
   createCourse,
   DeleteCourse,
   getAllCourse,
+  getBestSellingCourses,
+  getBestSellingCoursesByCategory,
   getCourseById,
+  getCourseByInstructorId,
   getCourseRequirementsByCourseId,
   getEnrolmentByCourseId,
+  getFeaturedCourses,
   getInstructorByCourseId,
   getLearningsByCourseId,
   getModulesByCourseId,
@@ -26,13 +30,16 @@ const upload = multer({
   });
 
 
-
 // Public routes
 router.post("/", protect, createCourse);
 router.get("/", getAllCourse);
+router.get("/best-selling", getBestSellingCourses);
+router.get("/featured-course", getFeaturedCourses);
+router.get("/best-selling-category", getBestSellingCoursesByCategory);
 router.get("/:id", getCourseById);
+router.get("/instructor/:id", getCourseByInstructorId);
 router.put(
-  "/:id",
+  "/:id",protect,
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "trailer", maxCount: 1 },

@@ -79,13 +79,12 @@ model User {
   updatedAt              DateTime  @updatedAt
   imageUrl               String?
   bio                    String?
+  title                  String? 
+  username               String? 
   portfolio              String?
   lastLogin              DateTime?
   lastLogout             DateTime?
   lastActive             DateTime?
-  passwordResetToken     String?
-  otp                    String?
-  otpExpiry              DateTime?
   emailVerified          Boolean   @default(false)
   emailVerificationToken String?
 
@@ -100,6 +99,8 @@ model User {
   tosAcceptedAt          DateTime?
   deletedAt              DateTime?
   subscribedToNewsletter Boolean    @default(false)
+  otp                    Otp?       @relation(fields: [otpId], references: [id], name: "UserOtp")
+  otpId                  String?    @unique @map("otp_id") @db.ObjectId
 
   // Related fields
   enrolledCourses        Enrollment[]
@@ -134,6 +135,19 @@ model User {
   @@map("users")
 }
 
+model Otp {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  code            String
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  verified        Boolean  @default(false)
+  failedAttempts  Int?     @default(0)
+  user            User?    @relation(name: "UserOtp")
+
+  @@map("otps")
+}
+
+
 model IPList {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
@@ -147,7 +161,6 @@ model Instructor {
   id        String             @id @default(auto()) @map("_id") @db.ObjectId
   userId    String             @unique @map("user_id") @db.ObjectId
   user      User               @relation(fields: [userId], references: [id])
-  title     String? // Tuhin
   phone     String? // Tuhin
   bio       String? // Tuhin
   about     String? // Talha
@@ -194,6 +207,7 @@ model Course {
   subtitleLanguages  String[]
   level              Difficulty   @default(BEGINNER)
   duration           String?
+  durationUnit       String?
   thumbnail          String?
   trailer            String?
   price              Float?
@@ -231,7 +245,7 @@ model Course {
   congratulationsMessage String?
   certificateTemplateUrl String?
   payment                Payment[]
-  
+  isFeatureCourse        Boolean   @default(false)
 
   @@map("courses")
 }
@@ -247,6 +261,7 @@ model Learnings {
 
   @@map("learnings")
 }
+
 
 model TargetAudience {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -294,10 +309,10 @@ model Lesson {
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
   deletedAt             DateTime?
-  Quiz                  Quiz[]           @relation("QuizToLesson")
-  Note                  Note[]
-  Comment               Comment[]
-  Attachment            Attachment[]
+  quiz                  Quiz[]           @relation("QuizToLesson")
+  note                  Note[]
+  comment               Comment[]
+  attachment            Attachment[]
   lessonProgress        lessonProgress[]
   order                 Int?             // Order of the lessons within a module
   lessonType            LessonType       @default(VIDEO)
@@ -331,6 +346,7 @@ model Attachment {
   lesson    Lesson   @relation(fields: [lessonId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?        @map("deleted_at") 
 }
 
 model Note {
@@ -342,6 +358,7 @@ model Note {
   lesson    Lesson   @relation(fields: [lessonId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
   userId    String?  @db.ObjectId
   User      User?    @relation(fields: [userId], references: [id])
 }
@@ -471,8 +488,8 @@ model Quiz {
   description    String?
   course         Course     @relation(fields: [courseId], references: [id])
   courseId       String     @db.ObjectId
-  lessionId      String     @db.ObjectId
-  lesson         Lesson     @relation("QuizToLesson", fields: [lessionId], references: [id])
+  lessonId      String     @db.ObjectId
+  lesson        Lesson     @relation("QuizToLesson", fields: [lessonId], references: [id])
   questions      Question[]
   grades         Grade[]
   createdAt      DateTime   @default(now())
@@ -633,8 +650,8 @@ model Payment {
   amount                 Float
   currency               String
   method                 String
-  card                   PaymentCard @relation(fields: [cardId], references: [id])
-  cardId                 String      @db.ObjectId
+  card                   PaymentCard? @relation(fields: [cardId], references: [id])
+  cardId                 String?      @db.ObjectId
   status                 String? // Success, Failed
   createdAt              DateTime    @default(now())
   updatedAt              DateTime    @updatedAt
@@ -687,6 +704,7 @@ model Notification {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deletedAt      DateTime?
+  isSeen         Boolean? @default(false)
 }
 
 model Cupon {
@@ -774,6 +792,55 @@ model SubscribedToNewsletter {
   userId    String?  @db.ObjectId
   user      User?    @relation(fields: [userId], references: [id])
   email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Testimonial {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  employer   String
+  company    String
+  message    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+model Contact {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName  String
+  lastName   String
+  email      String
+  subject    String
+  message    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt              DateTime?
+}
+model FaqGroup {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  role      String
+  category  String
+  faqs      Faq[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Faq {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  question   String
+  answer     String
+  faqGroup   FaqGroup @relation(fields: [faqGroupId], references: [id])
+  faqGroupId String   @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+}
+
+model FaqSubmission {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  subject   String
+  question  String
+  answer    String?
+  isApproved Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -2,9 +2,6 @@ import cloudinary from "../lib/uploadToCloudinary.js";
 import { AppError } from "../middleware/errorHandler.js";
 import { prisma } from "../models/index.js";
 
-// @desc    Create a new lesson
-// @route   POST /api/v1/lesson
-// @access  Private
 export const createLesson = async (req, res, next) => {
   try {
     const { title, content, moduleId } = req.body;
@@ -48,13 +45,10 @@ export const createLesson = async (req, res, next) => {
   }
 };
 
-// @desc    Get all lessons
-// @route   GET /api/v1/lesson
-// @access  Private
-
 export const getLessons = async (req, res, next) => {
   try {
     const lessons = await prisma.lesson.findMany({
+      where: { deletedAt: null },
       orderBy: { createdAt: "desc" },
     });
     res.status(200).json(lessons);
@@ -63,9 +57,6 @@ export const getLessons = async (req, res, next) => {
   }
 };
 
-// @desc    Get a single lesson
-// @route   GET /api/v1/lesson/:id
-// @access  Private
 export const getLessonById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -78,20 +69,21 @@ export const getLessonById = async (req, res, next) => {
   }
 };
 
-// @desc    Update a lesson
-// @route   PUT /api/v1/lesson/:id
-// @access  Private
 export const updateLesson = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, content, videoUrl } = req.body;
-
+    // const { title, content, videoUrl } = req.body;
     const existingLesson = await prisma.lesson.findUnique({ where: { id } });
     if (!existingLesson) return next(new AppError("Lesson not found", 404));
 
     const updatedLesson = await prisma.lesson.update({
       where: { id },
-      data: { title, content, videoUrl },
+      data: {
+        title: req.body.title || existingLesson.title,
+        content: req.body.content || existingLesson.content,
+        videoUrl: req.body.videoUrl || existingLesson.videoUrl,
+        caption: req.body.caption || existingLesson.caption,
+      },
     });
 
     res.status(200).json(updatedLesson);
@@ -99,9 +91,7 @@ export const updateLesson = async (req, res, next) => {
     next(error);
   }
 };
-// @desc    Delete a lesson
-// @route   PUT /api/v1/lesson/:id
-// @access  Private
+
 export const deleteLesson = async (req, res, next) => {
   try {
     const { id } = req.params;
