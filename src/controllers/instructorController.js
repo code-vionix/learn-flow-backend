@@ -78,6 +78,59 @@ export const getAllInstructors = async (req, res, next) => {
 };
 
 
+// export const getTopInstructorOfMonth = async (req, res, next) => {
+//   try {
+//     const startOfMonth = new Date(
+//       new Date().getFullYear(),
+//       new Date().getMonth(),
+//       1
+//     );
+//     const endOfMonth = new Date(
+//       new Date().getFullYear(),
+//       new Date().getMonth() + 1,
+//       0
+//     );
+
+//     const topInstructors = await prisma.instructor.findMany({
+//       where: {
+//         ratings: {
+//           some: {
+//             createdAt: {
+//               gte: startOfMonth,
+//               lte: endOfMonth,
+//             },
+//           },
+//         },
+//       },
+//       include: {
+//         user: true,
+//         ratings: true,
+//       },
+//     });
+
+//     // Rating average 
+//     const sortedInstructors = topInstructors
+//       .map((instructor) => {
+//         const ratings = instructor.ratings;
+//         const avgRating =
+//           ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length || 0;
+
+//         return {
+//           ...instructor,
+//           averageRating: avgRating,
+//         };
+//       })
+//       .sort((a, b) => b.averageRating - a.averageRating)
+//       .slice(0, 5); // Top 5
+
+//     res.status(200).json(sortedInstructors);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+// get instructor popular by averageRating
+
 export const getTopInstructorOfMonth = async (req, res, next) => {
   try {
     const startOfMonth = new Date(
@@ -105,19 +158,36 @@ export const getTopInstructorOfMonth = async (req, res, next) => {
       include: {
         user: true,
         ratings: true,
+        Course: {
+          select: {
+            title: true,
+            enrollments: true,
+            reviews: true,
+            category: true,
+            subCategory: true,
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
-    // Rating average হিসাব করুন
     const sortedInstructors = topInstructors
       .map((instructor) => {
         const ratings = instructor.ratings;
         const avgRating =
           ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length || 0;
 
+        const totalEnrollments = instructor.Course.reduce(
+          (total, course) => total + course.enrollments.length,
+          0
+        );
+
         return {
           ...instructor,
           averageRating: avgRating,
+          totalEnrollments,
         };
       })
       .sort((a, b) => b.averageRating - a.averageRating)
@@ -129,13 +199,24 @@ export const getTopInstructorOfMonth = async (req, res, next) => {
   }
 };
 
-// get instructor popular by averageRating
 export const getTopInstructor = async (req, res, next) => {
   try {
     const instructors = await prisma.instructor.findMany({
       include: {
         user: true,
         ratings: true,
+        Course: {
+          select: {
+            title: true,
+            enrollments: true,
+            reviews: true,
+            category: true,
+            subCategory: true,
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
@@ -144,10 +225,16 @@ export const getTopInstructor = async (req, res, next) => {
         const ratings = instructor?.ratings;
         const avgRating =
           ratings?.reduce((sum, r) => sum + r.rating, 0) / ratings.length || 0;
+        
+          const totalEnrollments = instructor?.Course.reduce(
+            (total, course) => total + course?.enrollments.length,
+            0
+          );
 
         return {
           ...instructor,
           averageRating: avgRating,
+          totalEnrollments,
         };
       })
       .sort((a, b) => b.averageRating - a.averageRating)
