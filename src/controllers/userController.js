@@ -57,9 +57,9 @@ export const regenerateAccessToken = async (req, res, next) => {
 // @access  Public
 export const registerUser = async (req, res, next) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, username } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email || !password || !username) {
       return next(new AppError("All fields are required", 400));
     }
     // Check if user exists
@@ -82,6 +82,7 @@ export const registerUser = async (req, res, next) => {
         lastName,
         email,
         password: hashedPassword,
+        username,
       },
     });
 
@@ -170,9 +171,10 @@ export const loginUser = async (req, res, next) => {
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
         id: user.id,
-        name: user.name,
+        name: user.firstName + " " + user.lastName,
         email: user.email,
         role: user.role,
+        imageUrl: user.imageUrl,
         accessToken: generateToken(user.id, user.role),
         refreshToken: generateRefreshToken(user.id),
       });
@@ -198,6 +200,9 @@ export const getUserProfile = async (req, res, next) => {
         email: true,
         role: true,
         createdAt: true,
+        imageUrl: true,
+        title: true,
+        username: true,
       },
     });
 
@@ -213,7 +218,7 @@ export const getUserProfile = async (req, res, next) => {
 
 export const updateUserProfile = async (req, res, next) => {
   try {
-    const { firstName, lastName, email } = req.body;
+    const { firstName, lastName, email, username, title,imageUrl } = req.body;
 
     const updatedUser = await prisma.user.update({
       where: { id: req.user.id },
@@ -221,6 +226,9 @@ export const updateUserProfile = async (req, res, next) => {
         firstName,
         lastName,
         email,
+        username,
+        title,
+        imageUrl
       },
       select: {
         id: true,
@@ -229,6 +237,9 @@ export const updateUserProfile = async (req, res, next) => {
         email: true,
         role: true,
         createdAt: true,
+        imageUrl: true,
+        title: true,
+        username: true,
       },
     });
 
@@ -237,7 +248,6 @@ export const updateUserProfile = async (req, res, next) => {
     next(error);
   }
 };
-
 
 // @desc    Get all users
 // @route   GET /api/v1/users
@@ -255,7 +265,7 @@ export const getUsers = async (req, res, next) => {
 // @route   GET /api/v1/users/:id
 // @access  Private/Admin
 export const getUserById = async (req, res, next) => {
-  console.log('.......', req.params.id);
+  console.log(".......", req.params.id);
   try {
     const user = await userService.getUserById(req.params.id);
 
@@ -292,16 +302,17 @@ export const createUser = async (req, res, next) => {
 export const updateUser = async (req, res, next) => {
   const { currentPassword, newPassword } = req.body;
 
-const userId = req.user.id;
+  const userId = req.user.id;
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
 
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' });
+    if (!isMatch)
+      return res.status(400).json({ message: "Current password is incorrect" });
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
@@ -311,12 +322,11 @@ const userId = req.user.id;
       data: { password: hashedPassword },
     });
 
-    res.status(200).json({ message: 'Password updated successfully' });
+    res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     next(error);
   }
 };
-
 
 // @desc    Delete a user
 // @route   DELETE /api/v1/users/:id

@@ -30,13 +30,11 @@ router.post("/access-token", regenerateAccessToken); //api/v1/users/access-token
 // User profile
 router.get("/profile", getUserProfile); //api/v1/users/profile
 router.put("/profile", updateUserProfile);
+router.route("/change-password").put(updateUser); //api/v1/users/:id
 
 // Admin only routes
 router.use(restrictTo("ADMIN"));
-
 router.route("/").get(getUsers).post(createUser); //api/v1/users
-
 router.route("/:id").get(getUserById).put(updateUser).delete(deleteUser); //api/v1/users/:id
-router.route("/change-password").put(updateUser); //api/v1/users/:id
 
 export default router;

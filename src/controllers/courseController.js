@@ -135,12 +135,12 @@ export const getAllCourse = async (req, res, next) => {
 };
 
 // get course by instructorId
-export const getCourseByInstructorId = async (req, res, next) => {
+export const getCourseByTeacherId = async (req, res, next) => {
   try {
     const { id } = req.params;
     const courses = await prisma.course.findMany({
       where: {
-        instructorId : id,
+        teacherId: id,
       },
     });
     res.status(200).json(courses);
@@ -345,14 +345,20 @@ export const getCourseById = async (req, res, next) => {
         id: true,
         title: true,
         subtitle: true,
-        category: { select: { name: true } },
-        subCategory: { select: { name: true } },
+        category: {
+          select: {
+            name: true,
+            id: true,
+          },
+        },
+        subCategory: { select: { name: true, id: true } },
         topic: true,
         description: true,
         language: true,
         subtitleLanguages: true,
         level: true,
         duration: true,
+        durationUnit: true,
         thumbnail: true,
         trailer: true,
         price: true,
@@ -365,7 +371,7 @@ export const getCourseById = async (req, res, next) => {
         teacherId: true,
         status: true,
         visibility: true,
-        instructorId: true,
+        CourseInstructor: true,
         tags: true,
         createdAt: true,
         updatedAt: true,
@@ -393,6 +399,16 @@ export const getCourseById = async (req, res, next) => {
             },
           },
         },
+        PreRequirement: true,
+        targetAudiences: true,
+        learnings: true,
+        Revenue: true,
+        Cart: true,
+        Wishlist: true,
+        CourseProgress: true,
+        payment: true,
+        enrollments: true,
+        reviews: true,
       },
     });
 
@@ -433,8 +449,8 @@ export const getCourseById = async (req, res, next) => {
     };
 
     // Remove full category and subCategory if name exists
-    if (response.categoryName) delete response.category;
-    if (response.subCategoryName) delete response.subCategory;
+    // if (response.categoryName) delete response.category;
+    // if (response.subCategoryName) delete response.subCategory;
 
     res.status(200).json(response);
   } catch (error) {
@@ -464,15 +480,17 @@ export const UpdateCourse = async (req, res, next) => {
     targetAudience,
     courseRequirements,
     price,
-    discountPrice,
-    discountPercentage,
+    discount,
     startDate,
     endDate,
     status,
     visibility,
     deletedAt,
+    instructors,
+    welcomeMessage,
+    congratulationsMessage,
   } = req.body;
-
+  console.log("🚀 ~ UpdateCourse ~ req.body:", req.body);
   try {
     // Upload files if provided
     const thumbnailFile = req?.files?.thumbnail?.[0];
@@ -517,9 +535,12 @@ export const UpdateCourse = async (req, res, next) => {
       thumbnail: thumbnailUrl || existingCourse.thumbnail,
       trailer: trailerUrl || existingCourse.trailer,
       price: price || existingCourse.price,
-      discountPrice: discountPrice || existingCourse.discountPrice,
-      discountPercentage:
-        discountPercentage || existingCourse.discountPercentage,
+      discountPrice:
+        price - (price * discount) / 100 || existingCourse.discountPrice,
+      discountPercentage: discount || existingCourse.discountPercentage,
+      welcomeMessage: welcomeMessage || existingCourse.welcomeMessage,
+      congratulationsMessage:
+        congratulationsMessage || existingCourse.congratulationsMessage,
       startDate: startDate || existingCourse.startDate,
       endDate: endDate || existingCourse.endDate,
       imageUrl: imageUrl || existingCourse.imageUrl,
@@ -553,6 +574,30 @@ export const UpdateCourse = async (req, res, next) => {
         deleteMany: {},
         create: courseRequirements.map((item) => ({
           description: item.description,
+        })),
+      };
+    }
+// if instructor is provided then update CourseInstructor
+    if (instructors) {
+      // Fetch existing instructor IDs for this course
+      const existingCourseInstructors = await prisma.courseInstructor.findMany({
+        where: { courseId: id },
+        select: { instructorId: true },
+      });
+
+      const existingInstructorIds = existingCourseInstructors.map(ci => ci.instructorId);
+
+      // Determine who to delete and who to add
+      const toDelete = existingInstructorIds.filter(id => !instructors.includes(id));
+      const toAdd = instructors.filter(id => !existingInstructorIds.includes(id));
+
+      updateData.CourseInstructor = {
+        deleteMany: {
+          courseId: id,
+          instructorId: { in: toDelete },
+        },
+        create: toAdd.map(instructorId => ({
+          instructorId,
         })),
       };
     }
@@ -596,7 +641,6 @@ export const DeleteCourse = async (req, res, next) => {
 };
 //get instructor by course id
 export const getInstructorByCourseId = async (req, res, next) => {
-  console.log("params:", req.params);
   try {
     const { courseId } = req.params;
 
@@ -607,36 +651,49 @@ export const getInstructorByCourseId = async (req, res, next) => {
     // Fetch course with instructor and specific user fields
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: {
-        instructor: {
-          include: {
-            user: {
-              select: {
-                firstName: true,
-                lastName: true,
-                imageUrl: true,
-                country: true,
-                city: true,
-              },
-            },
-            Course: {
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            createdCourses: {
               select: {
                 id: true,
+                title: true,
               },
             },
+            Instructor: {
+              select: {
+                id: true,
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    imageUrl: true,
+                    country: true,
+                    city: true,
+                  },
+                },
+              },
+            },
+            firstName: true,
+            lastName: true,
+            imageUrl: true,
+            country: true,
+            city: true,
           },
         },
       },
     });
 
-    if (!course || !course.instructor) {
-      return res
-        .status(404)
-        .json({ msg: "Instructor not found for this course" });
-    }
-
-    const instructor = course.instructor;
-    const courseIds = instructor.Course.map((c) => c.id);
+    // if (!course || !course.teacher) {
+    //   return res
+    //     .status(404)
+    //     .json({ msg: "Instructor not found for this course" });
+    // }
+    console.log("course:", course);
+    const instructor = course.teacher;
+    const courseIds = instructor.createdCourses.map((c) => c.id);
     const totalCourses = courseIds.length;
 
     const totalStudents = await prisma.enrollment.count({
@@ -662,15 +719,13 @@ export const getInstructorByCourseId = async (req, res, next) => {
     const averageRating = averageRatingResult._avg.rating || 0;
 
     // Construct only the fields you need
-    const user = instructor.user;
+
     const instructorResponse = {
       ...instructor,
-      user: {
-        fullName: `${user.firstName} ${user.lastName}`,
-        imageUrl: user.imageUrl,
-        country: user.country,
-        city: user.city,
-      },
+      fullName: `${instructor.firstName} ${instructor.lastName}`,
+      imageUrl: instructor.imageUrl,
+      country: instructor.country,
+      city: instructor.city,
       totalCourses,
       totalStudents,
       averageRating: parseFloat(averageRating.toFixed(1)), // Optional: format to 1 decimal place
