@@ -20,12 +20,12 @@ const router = express.Router();
 router.post("/register", registerUser); //api/v1/users/register
 router.post("/login", loginUser); //api/v1/users/login
 router.post("/oauth-login", oauthLoginUser); // api/v1/users/oauth-login
+router.post("/access-token", regenerateAccessToken); //api/v1/users/access-token
 
 // Protected routes
 router.use(protect);
 
 // Token rotation route
-router.post("/access-token", regenerateAccessToken); //api/v1/users/access-token
 
 // User profile
 router.get("/profile", getUserProfile); //api/v1/users/profile
