@@ -87,10 +87,14 @@ export const createCourse = async (req, res, next) => {
     return next(new AppError(error.message || "Something went wrong", 500));
   }
 };
+
+ 
+
 //Get all course
 
 export const getAllCourse = async (req, res, next) => {
   try {
+    console.log("🚀 ~ createReview ~ req.body:", res.user);
     const whereClause = buildCourseFilter(req.query);
     const orderBy = sortByType(req.query);
 
@@ -154,15 +158,29 @@ export const getBestSellingCourses = async (req, res) => {
   try {
     const bestSellingCourses = await prisma.course.findMany({
       where: {
-        deletedAt: null, // exclude deleted courses
-        status: "PUBLISHED", // only published courses
+        deletedAt: null,
+        // visibility: "PUBLISHED", 
+        enrollments: {
+          some: {}, 
+        },
       },
       include: {
         _count: {
-          select: { enrollments: true },
+          select: {
+            enrollments: true,
+          },
         },
         category: {
-          select: { id: true, name: true },
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        subCategory: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
       orderBy: {
@@ -170,7 +188,7 @@ export const getBestSellingCourses = async (req, res) => {
           _count: "desc",
         },
       },
-      take: 10, // return top 10 best selling
+      take: 10,
     });
 
     res.status(200).json({
@@ -186,10 +204,11 @@ export const getBestSellingCourses = async (req, res) => {
   }
 };
 
-// get best selling
+
+// Featured courses
 export const getFeaturedCourses = async (req, res) => {
   try {
-    const bestSellingCourses = await prisma.course.findMany({
+    const featuredCourses = await prisma.course.findMany({
       where: {
         deletedAt: null,
         isFeatureCourse: true,
@@ -202,21 +221,50 @@ export const getFeaturedCourses = async (req, res) => {
           select: { rating: true, comment: true, userId: true, id: true },
         },
         enrollments: true,
+        CourseInstructor: {
+          select: {
+            instructor: {
+              select: {
+                user: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                    imageUrl: true,
+                    country: true,
+                    city: true,
+                  }
+                }
+              }
+            }
+          }
+        },
       },
+    });
+
+    // 🛠️ Restructure CourseInstructor
+    const formattedCourses = featuredCourses.map(course => {
+      const instructors = course.CourseInstructor.map(ci => ({
+        ...ci.instructor.user,
+      }));
+      return {
+        ...course,
+        CourseInstructor: instructors,
+      };
     });
 
     res.status(200).json({
       success: true,
-      data: bestSellingCourses,
+      data: formattedCourses,
     });
   } catch (error) {
-    console.error("Error fetching best selling courses:", error);
+    console.error("Error fetching featured courses:", error);
     res.status(500).json({
       success: false,
       message: "Something went wrong.",
     });
   }
 };
+
 
 //get best selling courses by category id
 export const getBestSellingCoursesByCategory = async (req, res) => {
@@ -254,6 +302,7 @@ export const getBestSellingCoursesByCategory = async (req, res) => {
     });
   }
 };
+
 
 // get course by id
 // export const getCourseById = async (req, res, next) => {
