@@ -104,6 +104,21 @@ export const getAllCourse = async (req, res, next) => {
           select: { rating: true, comment: true, userId: true, id: true },
         },
         enrollments: true,
+        learnings: {
+          select: { description: true },
+        },
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            imageUrl: true,
+            title: true,
+            bio: true,
+            role: true,
+            status: true,
+          },
+        },
       },
     });
 
@@ -120,8 +135,17 @@ export const getAllCourse = async (req, res, next) => {
       const ratingCount = course?.reviews?.length || 0;
       const averageRating = ratingCount > 0 ? totalRating / ratingCount : 0;
 
+      // Combine firstName and lastName into name
+      const teacher = course.teacher
+        ? {
+            ...course.teacher,
+            name: `${course.teacher.firstName} ${course.teacher.lastName}`,
+          }
+        : null;
+
       return {
         ...course,
+        teacher,
         rating: averageRating,
         students: course?.enrollments?.length || 0,
       };
@@ -133,6 +157,7 @@ export const getAllCourse = async (req, res, next) => {
     return next(new AppError("An error occurred while fetching courses.", 500));
   }
 };
+
 
 // get course by instructorId
 export const getCourseByTeacherId = async (req, res, next) => {

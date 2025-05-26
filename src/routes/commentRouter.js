@@ -7,13 +7,14 @@ import {
   getCommentById,
   updateComment,
 } from "../controllers/commentController.js";
+import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/", createComment);
+router.post("/",protect, createComment);
 router.get("/", getAllComments);
-router.get("/:id", getCommentById);
-router.patch("/:id", updateComment);
-router.delete("/:id", deleteComment);
+router.get("/:id", protect, getCommentById);
+router.patch("/:id", protect, updateComment);
+router.delete("/:id", protect, deleteComment);
 
 export default router;
