@@ -815,6 +815,52 @@ export const getInstructorByCourseId = async (req, res, next) => {
 };
 
 //get modules by course id
+// export const getModulesByCourseId = async (req, res, next) => {
+//   try {
+//     const { courseId } = req.params;
+
+//     if (!courseId) {
+//       return next(new AppError("Course ID is required", 400));
+//     }
+
+//     const modules = await prisma.module.findMany({
+//       where: { courseId },
+//       include: { lessons: true },
+//       orderBy: { order: "asc" },
+//     });
+
+//     if (!modules?.length) {
+//       return next(new AppError("No modules found for this course", 404));
+//     }
+
+//     // Flatten lessons and calculate stats in one loop
+//     let totalLessons = 0;
+//     let totalEstimatedMinutes = 0;
+
+//     modules.forEach((mod) => {
+//       totalLessons += mod.lessons.length;
+//       mod.lessons.forEach((lesson) => {
+//         totalEstimatedMinutes += lesson.estimatedTime || 0;
+//       });
+//     });
+
+//     const hours = Math.floor(totalEstimatedMinutes / 60);
+//     const minutes = totalEstimatedMinutes % 60;
+//     const totalEstimatedTime = hours ? `${hours}h ${minutes}m` : `${minutes}m`;
+
+//     res.status(200).json({
+//       status: "success",
+//       results: modules.length,
+//       totalModules: modules.length,
+//       totalLessons,
+//       totalEstimatedTime,
+//       data: modules,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching modules:", error);
+//     next(new AppError("Server error while fetching modules", 500));
+//   }
+// };
 export const getModulesByCourseId = async (req, res, next) => {
   try {
     const { courseId } = req.params;
@@ -825,7 +871,18 @@ export const getModulesByCourseId = async (req, res, next) => {
 
     const modules = await prisma.module.findMany({
       where: { courseId },
-      include: { lessons: true },
+      include: {
+        lessons: {
+          orderBy: { order: "asc" }, // Optional: Order lessons inside each module
+          include: {
+            quiz: true,
+            note: true,
+            comment: true,
+            attachment: true,
+            lessonProgress: true,
+          },
+        },
+      },
       orderBy: { order: "asc" },
     });
 
@@ -833,7 +890,7 @@ export const getModulesByCourseId = async (req, res, next) => {
       return next(new AppError("No modules found for this course", 404));
     }
 
-    // Flatten lessons and calculate stats in one loop
+    // Flatten lessons and calculate stats
     let totalLessons = 0;
     let totalEstimatedMinutes = 0;
 
@@ -844,16 +901,16 @@ export const getModulesByCourseId = async (req, res, next) => {
       });
     });
 
-    const hours = Math.floor(totalEstimatedMinutes / 60);
-    const minutes = totalEstimatedMinutes % 60;
-    const totalEstimatedTime = hours ? `${hours}h ${minutes}m` : `${minutes}m`;
+    // const hours = Math.floor(totalEstimatedMinutes / 60);
+    // const minutes = totalEstimatedMinutes % 60;
+    // const totalEstimatedTime = hours ? ${hours}h ${minutes}m : ${minutes}m;
 
     res.status(200).json({
       status: "success",
       results: modules.length,
       totalModules: modules.length,
       totalLessons,
-      totalEstimatedTime,
+      // totalEstimatedTime,
       data: modules,
     });
   } catch (error) {
@@ -861,7 +918,6 @@ export const getModulesByCourseId = async (req, res, next) => {
     next(new AppError("Server error while fetching modules", 500));
   }
 };
-
 //get learnings by course id
 export const getLearningsByCourseId = async (req, res, next) => {
   try {

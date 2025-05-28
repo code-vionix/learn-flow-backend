@@ -9,7 +9,7 @@ export const createComment = async (req, res, next) => {
     const { text, lessonId, parentId } = req.body;
 
     // Hardcoded userId for now (replace with actual auth later)
-    const userId = "67debbfbd62e2129820291dc";
+    const userId = req.user.id;
 
     if (!userId) {
       return next(new AppError("Unauthorized", 401));
