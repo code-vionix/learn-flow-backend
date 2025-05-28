@@ -50,7 +50,7 @@ export const createCheckoutSession = async (req, res) => {
       ],
       mode: "payment",
       // success_url: `http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}&course_id=${courseId}`, // URL to redirect on success
-      success_url: `${process.env.FRONTEND_SUCCESS_URL}/student`, // URL to redirect on success
+      success_url: `http://localhost:3000/student`, // URL to redirect on success
       cancel_url: `http://localhost:3000/cancel`, // URL to redirect on cancel
       metadata: {
         userId: userId,
