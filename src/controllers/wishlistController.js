@@ -60,12 +60,16 @@ export const getWishlist = async (req, res) => {
                 rating: true,
               },
             },
-            instructor: {
+            CourseInstructor: {
               include: {
-                user: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
+                instructor: {
+                  include: {
+                    user: {
+                      select: {
+                        firstName: true,
+                        lastName: true,
+                      },
+                    },
                   },
                 },
               },
@@ -75,28 +79,21 @@ export const getWishlist = async (req, res) => {
       },
     });
 
-    // Transform the data to include total reviews, average rating, and image URL
     const formattedWishlist = wishlist.map((item) => {
       const totalReviews = item.course.reviews.length;
       const averageRating =
         totalReviews > 0
-          ? item.course.reviews.reduce(
-              (acc, review) => acc + review.rating,
-              0
-            ) / totalReviews
+          ? item.course.reviews.reduce((acc, review) => acc + review.rating, 0) / totalReviews
           : 0;
 
-      // Safely map instructors
-      const instructors = Array.isArray(item.course.teacher)
-        ? item.course.teacher.map(
-            (inst) => `${inst.user.firstName} ${inst.user.lastName}`
-          )
-        : [];
+      const instructors = item.course.CourseInstructor.map(
+        (ci) => `${ci.instructor.user.firstName} ${ci.instructor.user.lastName}`
+      );
 
       return {
         title: item.course.title,
         image: item.course.imageUrl ?? null,
-        instructors, // If there are no instructors, it will be an empty array
+        instructors,
         reviews: totalReviews,
         originalPrice: item.course.price,
         discountedPrice: item.course.discountPrice,

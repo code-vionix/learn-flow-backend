@@ -1,7 +1,7 @@
 import { prisma } from "../models/index.js";
 
 export const purchesHistory = async (req, res) => {
-  const { userId } = req.params;
+  const userId = req.user.id;
 
   try {
     const enrollments = await prisma.enrollment.findMany({
@@ -9,7 +9,7 @@ export const purchesHistory = async (req, res) => {
       include: {
         course: {
           select: {
-            id:true,
+            id: true,
             title: true,
             thumbnail: true,
             language: true,
@@ -42,7 +42,6 @@ export const purchesHistory = async (req, res) => {
       },
     });
 
-    
     const enrichedEnrollments = await Promise.all(
       enrollments.map(async (enrollment) => {
         const courseId = enrollment.course.id;
@@ -56,16 +55,20 @@ export const purchesHistory = async (req, res) => {
 
         return {
           ...enrollment,
-          course: [{
-            ...enrollment.course,
-            averageRating: parseFloat((ratingData._avg.rating || 0).toFixed(1)),
-            totalReviews: ratingData._count.rating || 0,
-          }]
+          course: [
+            {
+              ...enrollment.course,
+              averageRating: parseFloat(
+                (ratingData._avg.rating || 0).toFixed(1)
+              ),
+              totalReviews: ratingData._count.rating || 0,
+            },
+          ],
         };
       })
     );
-     // Remove courseId from the response
-     const response = enrichedEnrollments.map((enrollment) => {
+    // Remove courseId from the response
+    const response = enrichedEnrollments.map((enrollment) => {
       const { courseId, ...rest } = enrollment;
       return rest;
     });
