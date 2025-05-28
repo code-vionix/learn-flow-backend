@@ -20,6 +20,18 @@ export const createCheckoutSession = async (req, res) => {
     const course = await prisma.course.findUnique({ where: { id: courseId } });
     if (!course) return res.status(400).json({ error: "Invalid courseId" });
 
+     // Check if user is already enrolled
+    const existingEnrollment = await prisma.enrollment.findFirst({
+      where: {
+        userId,
+        courseId,
+      },
+    });
+
+    if (existingEnrollment) {
+      return res.status(409).json({ error: "You are already enrolled in this course" });
+    }
+
     // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"], //payment methods allowed
@@ -38,7 +50,7 @@ export const createCheckoutSession = async (req, res) => {
       ],
       mode: "payment",
       // success_url: `http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}&course_id=${courseId}`, // URL to redirect on success
-      success_url: `http://localhost:3001/`, // URL to redirect on success
+      success_url: `${process.env.FRONTEND_SUCCESS_URL}/student`, // URL to redirect on success
       cancel_url: `http://localhost:3000/cancel`, // URL to redirect on cancel
       metadata: {
         userId: userId,
@@ -127,30 +139,10 @@ const handlePaymentSuccess = async ({
   });
 };
 
-export const getAllPayments = async (req, res) => {
-  try {
-    const payments = await prisma.payment.findMany();
 
-    res.status(200).json(payments);
-  } catch (err) {
-    console.error("Error fetching payments:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const getAllEnrollments = async (req, res) => {
-  try {
-    const enrollments = await prisma.enrollment.findMany();
-
-    res.status(200).json(enrollments);
-  } catch (err) {
-    console.error("Error fetching enrollments:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
 
 export const getUserPayments = async (req, res) => {
-  const { userId } = req.params;
+  const userId = req.user.id;
 
   try {
     const payments = await prisma.payment.findMany({
@@ -165,7 +157,7 @@ export const getUserPayments = async (req, res) => {
 };
 
 export const getUserEnrollments = async (req, res) => {
-  const { userId } = req.params;
+  const userId = req.user.id;
 
   try {
     const enrollments = await prisma.enrollment.findMany({

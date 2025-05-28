@@ -1,10 +1,9 @@
 import bodyParser from "body-parser";
 import express from "express";
 
+import { getEnrolledTeacher } from "../controllers/enrolledTeacherController.js";
 import {
   createCheckoutSession,
-  getAllEnrollments,
-  getAllPayments,
   getUserEnrollments,
   getUserPayments,
   stripeWebhook,
@@ -21,9 +20,8 @@ enrollRoute.post(
 
 enrollRoute.post("/checkoutSession", protect, createCheckoutSession);
 
-enrollRoute.get("/all-payments", getAllPayments);
-enrollRoute.get("/all-enrollments", getAllEnrollments);
-enrollRoute.get("/user-payment/:userId", protect, getUserPayments);
-enrollRoute.get("/user-enroll/:userId", protect, getUserEnrollments);
+enrollRoute.get("/user-payment", protect, getUserPayments);
+enrollRoute.get("/user-enroll", protect, getUserEnrollments);
+enrollRoute.get("/enrolled-teacher", protect, getEnrolledTeacher);
 
 export default enrollRoute;
